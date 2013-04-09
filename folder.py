@@ -1,4 +1,5 @@
 import os
+import fnmatch
 
 class Folder():
 
@@ -15,8 +16,20 @@ class Folder():
             item_path = os.path.join(self.path, item)
             if os.path.isdir(item_path):
                 self.sub_folders.append(Folder(item_path))
-            else:
+            elif fnmatch.fnmatch(item,"*.bmp"):
                 self.files.append(item_path)
+
+    @property
+    def name(self):
+        return os.path.basename(self.path)
+    
+    def add_children(self, file_tree, file_tree_node):
+        for folder in self.sub_folders:
+            new_node = file_tree.AppendItem(file_tree_node, folder.name)
+            folder.add_children(file_tree, new_node)
+        for item in self.files:
+            file_tree.AppendItem(file_tree_node, os.path.basename(item))
+
     
     def __repr__(self):
         return self.path
