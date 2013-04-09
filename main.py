@@ -31,7 +31,7 @@ class MainWindow(wx.Frame):
         h_sizer = wx.BoxSizer(wx.HORIZONTAL)
         file_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        self.file_tree = wx.TreeCtrl(window_panel)
+        self.file_tree = wx.TreeCtrl(window_panel, size=(200, -1))
         file_sizer.Add(self.file_tree, 1, wx.EXPAND | wx.TOP | wx.RIGHT | wx.LEFT)
 
         ext_input_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -39,7 +39,7 @@ class MainWindow(wx.Frame):
         self.ext_field = wx.ComboBox(window_panel, value=".lsc",choices=[".lcs", ".ascii"])
         ext_input_sizer.Add(ext_label, 0, wx.TOP, 5)
         ext_input_sizer.Add(self.ext_field, 0,)
-        file_sizer.Add(ext_input_sizer, 0)
+        file_sizer.Add(ext_input_sizer, 0, wx.ALIGN_RIGHT)
 
         open_button = wx.Button(window_panel, wx.ID_OPEN, label="Open Folder")
         self.Bind(wx.EVT_BUTTON, self.on_open, open_button)
