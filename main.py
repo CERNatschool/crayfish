@@ -32,7 +32,9 @@ class MainWindow(wx.Frame):
         self.quit()
 
     def menu_open(self, event):
-        print "Menu Openned"
+        dialog =  wx.DirDialog(self, message = "Select containing folder")
+        if dialog.ShowModal() == wx.ID_OK:
+            self.top_folder = dialog.GetPath()
 
     def quit(self):
         self.Close()
