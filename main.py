@@ -28,10 +28,10 @@ class MainWindow(wx.Frame):
     def init_window(self):
         window_panel = wx.Panel(self)
 
-    def menu_quit(self, event):
+    def on_menu_quit(self, event):
         self.quit()
 
-    def menu_open(self, event):
+    def on_menu_open(self, event):
         dialog =  wx.DirDialog(self, message = "Select containing folder")
         if dialog.ShowModal() == wx.ID_OK:
             self.top_folder = dialog.GetPath()
