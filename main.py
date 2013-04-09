@@ -13,15 +13,13 @@ class MainWindow(wx.Frame):
 
     def init_menu_bar(self):
         menu_bar = wx.MenuBar()
-        
         file_menu = wx.Menu()
-        
+
         menu_quit = file_menu.Append(wx.ID_EXIT)
         self.Bind(wx.EVT_MENU, self.menu_quit, menu_quit)
-        
         menu_open = file_menu.Append(wx.ID_OPEN)
         self.Bind(wx.EVT_MENU, self.menu_open, menu_open)
-        
+
         menu_bar.Append(file_menu, "&File")
         self.SetMenuBar(menu_bar)
 
