@@ -27,26 +27,24 @@ class MainWindow(wx.Frame):
 
     def init_window(self):
         window_panel = wx.Panel(self)
-        window_panel.SetBackgroundColour("#4f5049")
+        window_panel.SetBackgroundColour("#5f6059")
         h_sizer = wx.BoxSizer(wx.HORIZONTAL)
         file_sizer = wx.BoxSizer(wx.VERTICAL)
-        file_input_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         self.file_tree = wx.TreeCtrl(window_panel)
-        file_sizer.Add(self.file_tree, 1, wx.EXPAND | wx.TOP | wx.RIGHT | wx.LEFT, 5)
+        file_sizer.Add(self.file_tree, 1, wx.EXPAND | wx.TOP | wx.RIGHT | wx.LEFT)
+
+        ext_input_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        ext_label = wx.StaticText(window_panel, label="Extension:")
+        self.ext_field = wx.ComboBox(window_panel, value=".lsc",choices=[".lcs", ".ascii"])
+        ext_input_sizer.Add(ext_label, 0, wx.TOP, 5)
+        ext_input_sizer.Add(self.ext_field, 0,)
+        file_sizer.Add(ext_input_sizer, 0)
 
         open_button = wx.Button(window_panel, wx.ID_OPEN, label="Open Folder")
-        file_input_sizer.Add(open_button, 0, wx.ALIGN_LEFT | wx.ALL, 5)
         self.Bind(wx.EVT_BUTTON, self.on_open, open_button)
-
-        ext_label = wx.StaticText(window_panel, label="Extension: .")
-        self.ext_field = wx.ComboBox(window_panel, value="lsc",choices=["lcs", "ascii"])
-        file_input_sizer.Add((10,-1))
-        file_input_sizer.Add(ext_label, 0, wx.TOP, 5)
-        file_input_sizer.Add(self.ext_field, 0,)
-
-        file_sizer.Add(file_input_sizer, 0, wx.ALIGN_BOTTOM)
-        h_sizer.Add(file_sizer, 1, wx.EXPAND)
+        file_sizer.Add(open_button, 0, wx.ALIGN_RIGHT)
+        h_sizer.Add(file_sizer, 0, wx.EXPAND | wx.ALL, 5)
 
         window_panel.SetSizer(h_sizer)
         
