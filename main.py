@@ -6,7 +6,7 @@ class MainWindow(wx.Frame):
     
     def __init__(self, parent, title):
         # Initialise window using parent class
-        wx.Frame.__init__(self, parent, title=title)
+        wx.Frame.__init__(self, parent, title=title, size = (900, 600))
         
         self.init_menu_bar()
         self.init_window()
