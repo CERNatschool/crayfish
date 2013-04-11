@@ -46,6 +46,26 @@ class MainWindow(wx.Frame):
         file_sizer.Add(open_button, 0, wx.ALIGN_RIGHT)
         h_sizer.Add(file_sizer, 0, wx.EXPAND | wx.ALL, 5)
 
+        centre_sizer = wx.BoxSizer(wx.VERTICAL)
+        display_notebook = wx.Notebook(window_panel, style = wx.NB_NOPAGETHEME)
+        display_trace = wx.Panel(display_notebook)
+        display_notebook.AddPage(display_trace, "Trace")
+        display_graph = wx.Panel(display_notebook)
+        display_notebook.AddPage(display_graph, "Graph")
+        centre_sizer.Add(display_notebook, 1, wx.EXPAND)
+        h_sizer.Add(centre_sizer, 1, wx.EXPAND)
+
+        settings_sizer = wx.BoxSizer(wx.VERTICAL)
+        settings_notebook = wx.Notebook(window_panel, size = (300, -1), style=wx.NB_NOPAGETHEME)
+        settings_view = wx.Panel(settings_notebook)
+        settings_notebook.AddPage(settings_view, "View")
+        settings_plot = wx.Panel(settings_notebook)
+        settings_notebook.AddPage(settings_plot, "Plot")
+        settings_classify = wx.Panel(settings_notebook)
+        settings_notebook.AddPage(settings_classify, "Classify")
+        settings_sizer.Add(settings_notebook, 1, wx.EXPAND)
+        h_sizer.Add(settings_sizer, 0, wx.EXPAND)
+
         window_panel.SetSizer(h_sizer)
         
 
