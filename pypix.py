@@ -1,8 +1,13 @@
+class Hit():
+    def __init__(self, value,cluster=None):
+        self.value = value
+        self.cluster = None
+
 class PixelGrid(dict):
 
     def __missing__(self, key):
         if self.in_grid(key):
-            return 0
+            return Hit(0)
         else:
             raise KeyError("Point outside of PixelGrid")
 
@@ -12,7 +17,7 @@ class PixelGrid(dict):
         return 0 <= x < self.width and 0 <= y < self.height
 
     @property
-    def hits(self):
+    def hit_pixels(self):
         return self.keys()
 
     @property
@@ -21,7 +26,7 @@ class PixelGrid(dict):
 
     @property
     def counts(self):
-        return self.values()
+        return [pixel.value for pixel in self.hit_pixels]
 
     @property
     def volume(self):
@@ -37,23 +42,23 @@ class PixelGrid(dict):
 
     @property
     def min_x(self):
-        return min([hit[0] for hit in self.hits])
+        return min([pixel[0] for pixel in self.hit_pixels])
     @property
     def max_x(self):
-        return max([hit[0] for hit in self.hits])
+        return max([pixel[0] for pixel in self.hit_pixels])
     @property
     def min_y(self):
-        return min([hit[1] for hit in self.hits])
+        return min([pixel[1] for pixel in self.hit_pixels])
     @property
     def max_y(self):
-        return max([hit[1] for hit in self.hits])
+        return max([pixel[1] for pixel in self.hit_pixels])
 
     def number_of_neighbours(self, pixel):
         x, y = pixel
         x_values = [x + offset for offset in [-1,0,1]]
         y_values = [y + offset for offset in [-1,0,1]]
         return sum([1 for i in x_values for j in y_values
-                if self.in_grid((i,j)) and (i,j) != pixel and self[i,j]])
+                if self.in_grid((i,j)) and (i,j) != pixel and self[i,j].value])
 
     def get_max_neighbours(self):
         neighbours = {}
@@ -75,9 +80,6 @@ class PixelGrid(dict):
 
 class Frame(PixelGrid):
 
-    def calculate_clusters(self):
-        self.clusters = []
-
     @staticmethod
     def from_file(filepath, file_format = "lsc"):
         frame = Frame()
@@ -88,7 +90,7 @@ class Frame(PixelGrid):
                         continue
                     pixel, count = line.strip().split()
                     pixel = tuple([int(coord) for coord in pixel.split(",")])
-                    frame[pixel] = count
+                    frame[pixel] = Hit(count)
             frame.width = 256
             frame.height = 256
         else:
@@ -102,7 +104,7 @@ class Cluster(PixelGrid):
         return self.max_x
 
     @property
-    def width(self):
+    def height(self):
         return self.max_y
 
     @property
