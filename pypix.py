@@ -4,7 +4,7 @@ class Hit():
         self.cluster = None
 
     def __str__(self):
-        return self.value
+        return str(self.value)
 
 class PixelGrid(dict):
 
@@ -44,6 +44,15 @@ class PixelGrid(dict):
         return float(self.volume)/self.num_hits
 
     @property
+    def standard_deviation(self):
+        mean_square = (float(sum([count**2 for count in self.counts]))
+                /self.num_hits)
+        square_mean = self.mean_count**2
+        print mean_square
+        print square_mean
+        return (mean_square - square_mean)**0.5
+
+    @property
     def min_x(self):
         return min([pixel[0] for pixel in self.hit_pixels])
     @property
@@ -80,6 +89,10 @@ class PixelGrid(dict):
         # max_neighbours = max(neighbours, key = lambda x: x[1])[1]
         # return max_neighbours, [pixel[0] for pixel in neighbours
         #         if pixel[1] == max_neighbours]
+
+    def __str__(self):
+        return "\n".join([str(pixel[0]) + "," + str(pixel[1])
+            + " " + str(self[pixel]) for pixel in self.hit_pixels])
 
 class Frame(PixelGrid):
 
