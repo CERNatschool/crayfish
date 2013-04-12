@@ -62,7 +62,7 @@ class PixelGrid(dict):
 
     def get_max_neighbours(self):
         neighbours = {}
-        for pixel in self.hits:
+        for pixel in self.hit_pixels:
             num_neighbours = self.number_of_neighbours(pixel)
             if num_neighbours in neighbours:
                 neighbours[num_neighbours].append(pixel)
@@ -73,12 +73,29 @@ class PixelGrid(dict):
 
         # ==Alternative Algorithm==
         # neighbours = [(pixel, self.number_of_neighbours(pixel))
-        #         for pixel in self.hits]
+        #         for pixel in self.hit_pixels]
         # max_neighbours = max(neighbours, key = lambda x: x[1])[1]
         # return max_neighbours, [pixel[0] for pixel in neighbours
         #         if pixel[1] == max_neighbours]
 
 class Frame(PixelGrid):
+
+    def calculate_clusters(self):
+        self.clusters = []
+        for pixel in self.hit_pixels:
+            if not self[pixel].cluster:
+                new_cluster = Cluster()
+                self.clusters.append(new_cluster)
+                new_cluster.add(pixel, self[pixel])
+                self._add_neighbouring_pixels(new_cluster)
+
+    def _add_neighbouring_pixels(self, cluster):
+        for pixel in self.hit_pixels:
+            if not self[pixel].cluster and cluster.is_neighbour(pixel):
+                cluster.add(pixel, self[pixel])
+                # Cluster now has more pixels, so check for new neighbours
+                self._add_neighbouring_pixels(cluster)
+
 
     @staticmethod
     def from_file(filepath, file_format = "lsc"):
@@ -99,6 +116,16 @@ class Frame(PixelGrid):
 
 class Cluster(PixelGrid):
 
+    def add(self, pixel, hit):
+        hit.cluster = self
+        self[pixel] = hit
+
+    def is_neighbour(self, other_pixel):
+        for pixel in self.hit_pixels:
+            if are_neighbours(pixel, other_pixel):
+                return True
+        return False
+
     @property
     def width(self):
         return self.max_x
@@ -109,12 +136,12 @@ class Cluster(PixelGrid):
 
     @property
     def geometric_centre(self):
-        return (self.width/2.0, self/height/2.0)
+        return (self.width/2.0, self.height/2.0)
 
     @property
     def centre_of_mass(self):
         weighted_hits = [tuple([self[hit] * coord for coord in hit])
-                for hit in self.hits]
+                for hit in self.hit_pixels]
         x_coords, y_coords = zip(*weighted_hits)
         total_weight = float(self.volume)
         return (sum(x_coords)/total_weight, sum(y_coords)/total_weight)
@@ -124,8 +151,13 @@ class Cluster(PixelGrid):
         # Call centre of mass once to save computing multiple times
         cofm_x, cofm_y = self.centre_of_mass
         distances_squared = []
-        for hit in self.hits:
+        for hit in self.hit_pixels:
             x_diff = hit[0] - cofm_x
             y_diff = hit[1] - cofm_x
             distances_squared.append(x_diff**2 + y_diff**2)
         return max(distances_squared)**0.5
+
+def are_neighbours(pixel1,pixel2):
+    x1, y1 = pixel1
+    x2, y2 = pixel2
+    return abs(x2-x1) <= 1 and abs (y2-y1) <= 1
