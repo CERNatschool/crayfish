@@ -3,6 +3,9 @@ class Hit():
         self.value = value
         self.cluster = None
 
+    def __str__(self):
+        return self.value
+
 class PixelGrid(dict):
 
     def __missing__(self, key):
@@ -22,11 +25,11 @@ class PixelGrid(dict):
 
     @property
     def num_hits(self):
-        return len(hit_pixels)
+        return len(self.hit_pixels)
 
     @property
     def counts(self):
-        return [pixel.value for pixel in self.hit_pixels]
+        return [pixel.value for pixel in self.values()]
 
     @property
     def volume(self):
@@ -38,7 +41,7 @@ class PixelGrid(dict):
 
     @property
     def mean_count(self):
-        return float(self.max_count)/self.num_hits
+        return float(self.volume)/self.num_hits
 
     @property
     def min_x(self):
@@ -84,7 +87,7 @@ class Frame(PixelGrid):
         self.clusters = []
         for pixel in self.hit_pixels:
             if not self[pixel].cluster:
-                new_cluster = Cluster()
+                new_cluster = Cluster(256, 256)
                 self.clusters.append(new_cluster)
                 new_cluster.add(pixel, self[pixel])
                 self._add_neighbouring_pixels(new_cluster)
@@ -107,7 +110,7 @@ class Frame(PixelGrid):
                         continue
                     pixel, count = line.strip().split()
                     pixel = tuple([int(coord) for coord in pixel.split(",")])
-                    frame[pixel] = Hit(count)
+                    frame[pixel] = Hit(int(count))
             frame.width = 256
             frame.height = 256
         else:
@@ -115,6 +118,10 @@ class Frame(PixelGrid):
         return frame
 
 class Cluster(PixelGrid):
+
+    def __init__(self, width, height):
+        self.width = 256
+        self.height = 256
 
     def add(self, pixel, hit):
         hit.cluster = self
@@ -127,20 +134,21 @@ class Cluster(PixelGrid):
         return False
 
     @property
-    def width(self):
-        return self.max_x
+    def cluster_width(self):
+        return self.max_x - self.min_x
 
     @property
-    def height(self):
-        return self.max_y
+    def cluster_height(self):
+        return self.max_y - self.min_y
 
     @property
     def geometric_centre(self):
-        return (self.width/2.0, self.height/2.0)
+        return (self.cluster_width/2.0 + self.min_x,
+                self.cluster_height/2.0 + self.min_y)
 
     @property
     def centre_of_mass(self):
-        weighted_hits = [tuple([self[hit] * coord for coord in hit])
+        weighted_hits = [tuple([self[hit].value * coord for coord in hit])
                 for hit in self.hit_pixels]
         x_coords, y_coords = zip(*weighted_hits)
         total_weight = float(self.volume)
@@ -151,9 +159,9 @@ class Cluster(PixelGrid):
         # Call centre of mass once to save computing multiple times
         cofm_x, cofm_y = self.centre_of_mass
         distances_squared = []
-        for hit in self.hit_pixels:
-            x_diff = hit[0] - cofm_x
-            y_diff = hit[1] - cofm_x
+        for pixel in self.hit_pixels:
+            x_diff = pixel[0] - cofm_x
+            y_diff = pixel[1] - cofm_y
             distances_squared.append(x_diff**2 + y_diff**2)
         return max(distances_squared)**0.5
 
