@@ -94,9 +94,17 @@ class PixelGrid(dict):
         return "\n".join([str(pixel[0]) + "," + str(pixel[1])
             + " " + str(self[pixel]) for pixel in self.hit_pixels])
 
+
+    def render_energy(self):
+        max_count = float(self.max_count)
+        return [[self[x,y].value / max_count
+                for x in range(self.width)] for y in range(self.height)]
+
 class Frame(PixelGrid):
 
     def calculate_clusters(self):
+        for pixel in self.hit_pixels:
+            self[pixel].cluster = None
         self.clusters = []
         for pixel in self.hit_pixels:
             if not self[pixel].cluster:
