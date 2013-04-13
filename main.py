@@ -128,14 +128,26 @@ class RenderPanel(wx.Panel):
         self.fig = matplotlib.figure.Figure()
         self.canvas = FigureCanvas(self, -1, self.fig)
         self.axes = self.fig.add_axes([0,0,1,1])
+        #self.Bind(wx.EVT_SIZE, self.on_size)
+
+        centre_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        centre_sizer.Add(self.canvas, 1, wx.ALIGN_CENTRE | wx.EXPAND)
+        self.SetSizer(centre_sizer)
+
+    def on_size(self, evt):
+        min_dim = min(self.GetSize())
+        self.canvas.SetSize((min_dim, min_dim))
 
 class TraceRender(RenderPanel):
 
     def render(self, data):
-        self.axes.imshow(data, origin="lower", interpolation="nearest", cmap="hot")
+        self.axes.imshow(data, origin="lower", interpolation="nearest", cmap="hot", aspect="auto")
         self.canvas.draw()
+        print self.axes.images
+        if len(self.axes.images) > 1:
+            self.axes.images =  self.axes.images[:-1]
+        print self.axes.images
 
-a = None
 app = wx.App()
 
 main_window = MainWindow(None, "Crayfish")
