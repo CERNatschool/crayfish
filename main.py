@@ -127,13 +127,13 @@ class RenderPanel(wx.Panel):
         wx.Panel.__init__(self, parent)
         self.fig = matplotlib.figure.Figure()
         self.canvas = FigureCanvas(self, -1, self.fig)
+        self.axes = self.fig.add_axes([0,0,1,1])
 
 class TraceRender(RenderPanel):
 
     def render(self, data):
-        self.axes = self.fig.add_subplot(111)
         self.axes.imshow(data, origin="lower", interpolation="nearest", cmap="hot")
-        self.canvas = FigureCanvas(self, -1, self.fig)
+        self.canvas.draw()
 
 a = None
 app = wx.App()
