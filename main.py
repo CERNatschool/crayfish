@@ -44,7 +44,7 @@ class MainWindow(wx.Frame):
 
         ext_input_sizer = wx.BoxSizer(wx.HORIZONTAL)
         ext_label = wx.StaticText(window_panel, label="Extension:")
-        self.ext_field = wx.ComboBox(window_panel, value="*.lsc",choices=["*.lcs", "*.ascii"])
+        self.ext_field = wx.ComboBox(window_panel, value="*.lsc",choices=["*.lsc", "*.ascii"])
         ext_input_sizer.Add(ext_label, 0, wx.TOP, 5)
         ext_input_sizer.Add(self.ext_field, 0,)
         file_sizer.Add(ext_input_sizer, 0, wx.ALIGN_RIGHT)
@@ -143,10 +143,8 @@ class TraceRender(RenderPanel):
     def render(self, data):
         self.axes.imshow(data, origin="lower", interpolation="nearest", cmap="hot", aspect="auto")
         self.canvas.draw()
-        print self.axes.images
         if len(self.axes.images) > 1:
             self.axes.images =  self.axes.images[:-1]
-        print self.axes.images
 
 app = wx.App()
 
