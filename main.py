@@ -1,8 +1,14 @@
 import os
 
 import wx
+import matplotlib
+matplotlib.use('PS')
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 
-import folder2 as folder
+
+
+import folder
 import pypix
 
 class MainWindow(wx.Frame):
@@ -50,7 +56,8 @@ class MainWindow(wx.Frame):
 
         centre_sizer = wx.BoxSizer(wx.VERTICAL)
         display_notebook = wx.Notebook(window_panel, style = wx.NB_NOPAGETHEME)
-        display_trace = wx.Panel(display_notebook)
+        display_trace = TraceRender(display_notebook)
+        self.file_tree.renderer = display_trace
         display_notebook.AddPage(display_trace, "Trace")
         display_graph = wx.Panel(display_notebook)
         display_notebook.AddPage(display_graph, "Graph")
@@ -111,7 +118,22 @@ class FileTreeCtrl(wx.TreeCtrl):
     def on_select_node(self, evt):
         item = evt.GetItem()
         if self.GetPyData(item).node_type == folder.FRAME:
-            print "Selected: " + self.GetPyData(item).path
+            frame = pypix.Frame.from_file(self.GetPyData(item).path)
+            self.renderer.render(frame.render_energy())
+
+class RenderPanel(wx.Panel):
+
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent)
+        self.fig = plt.figure()
+        self.canvas = FigureCanvas(self, -1, self.fig)
+
+class TraceRender(RenderPanel):
+
+    def render(self, data):
+        self.axes = self.fig.add_subplot(111)
+        self.axes.imshow(data, origin="lower", interpolation="nearest", cmap="hot")
+        self.canvas = FigureCanvas(self, -1, self.fig)
 
 a = None
 app = wx.App()
