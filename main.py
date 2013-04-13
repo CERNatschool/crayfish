@@ -1,6 +1,9 @@
+import os
+
 import wx
 
-import folder
+import folder2 as folder
+import pypix
 
 class MainWindow(wx.Frame):
     
@@ -31,12 +34,12 @@ class MainWindow(wx.Frame):
         h_sizer = wx.BoxSizer(wx.HORIZONTAL)
         file_sizer = wx.BoxSizer(wx.VERTICAL)
 
-        self.file_tree = wx.TreeCtrl(window_panel, size=(200, -1))
+        self.file_tree = FileTreeCtrl(window_panel, size=(200, -1))
         file_sizer.Add(self.file_tree, 1, wx.EXPAND | wx.TOP | wx.RIGHT | wx.LEFT)
 
         ext_input_sizer = wx.BoxSizer(wx.HORIZONTAL)
         ext_label = wx.StaticText(window_panel, label="Extension:")
-        self.ext_field = wx.ComboBox(window_panel, value=".lsc",choices=[".lcs", ".ascii"])
+        self.ext_field = wx.ComboBox(window_panel, value="*.lsc",choices=["*.lcs", "*.ascii"])
         ext_input_sizer.Add(ext_label, 0, wx.TOP, 5)
         ext_input_sizer.Add(self.ext_field, 0,)
         file_sizer.Add(ext_input_sizer, 0, wx.ALIGN_RIGHT)
@@ -70,29 +73,53 @@ class MainWindow(wx.Frame):
         
 
 
-    def on_quit(self, event):
-        self.quit()
-
-    def on_open(self, event):
-        self.open_folder()
-
-    def open_folder(self):
-        dialog =  wx.DirDialog(self, message="Select containing folder")
-        if dialog.ShowModal() == wx.ID_OK:
-            self.top_folder = folder.Folder(dialog.GetPath())
-            self.reload_file_tree()
-
-    def reload_file_tree(self):
-        self.top_folder.build_subtree()
-        self.file_tree.DeleteAllItems()
-        root = self.file_tree.AddRoot(self.top_folder.name)
-        self.top_folder.add_children(self.file_tree, root)
-
-    def quit(self):
+    def on_quit(self, evt):
         self.Close()
 
+    def on_open(self, evt):
+        dialog =  wx.DirDialog(self, message="Select containing folder")
+        if dialog.ShowModal() == wx.ID_OK:
+            self.file_tree.set_top_node(folder.FileNode(dialog.GetPath()))
+            self.file_tree.extension = self.ext_field.GetValue()
+
+class FileTreeCtrl(wx.TreeCtrl):
+
+    def __init__(self, parent, size):
+        wx.TreeCtrl.__init__(self, parent, size=size)
+        self.Bind(wx.EVT_TREE_ITEM_EXPANDING, self.on_expand_node, self)
+        self.Bind(wx.EVT_TREE_SEL_CHANGED, self.on_select_node, self)
+
+    def set_top_node(self, node):
+        self.DeleteAllItems()
+        self.top_node = node
+        root = self.AddRoot(node.name)
+        self.SetItemHasChildren(root)
+        self.SetPyData(root, self.top_node)
+
+    def on_expand_node(self, evt):
+        parent_tree_node = evt.GetItem()
+        parent_file_node =  self.GetPyData(parent_tree_node)
+        if not parent_file_node.expanded:
+            child_dirs, child_frames = parent_file_node.get_children(self.extension)
+            for child_file_node in child_dirs:
+                child_tree_node = self.AppendItem(parent_tree_node, child_file_node.name)
+                self.SetItemHasChildren(child_tree_node)
+                self.SetPyData(child_tree_node, child_file_node)
+            for child_frame in child_frames:
+                child_tree_node = self.AppendItem(parent_tree_node, child_frame.name)
+                self.SetPyData(child_tree_node, child_frame)
+            parent_file_node.expanded = True
+
+    def on_select_node(self, evt):
+        item = evt.GetItem()
+        if self.GetPyData(item).node_type == folder.FRAME:
+            print "Selected: " + self.GetPyData(item).path
 
 
+
+
+
+a = None
 app = wx.App()
 
 main_window = MainWindow(None, "Crayfish")
