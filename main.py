@@ -6,15 +6,14 @@ import folder2 as folder
 import pypix
 
 class MainWindow(wx.Frame):
-    
+
     def __init__(self, parent, title):
         # Initialise window using parent class
         wx.Frame.__init__(self, parent, title=title, size = (900, 600))
-        
+
         self.init_menu_bar()
         self.init_window()
         self.Show()
-
 
     def init_menu_bar(self):
         menu_bar = wx.MenuBar()
@@ -70,7 +69,6 @@ class MainWindow(wx.Frame):
         h_sizer.Add(settings_sizer, 0, wx.EXPAND)
 
         window_panel.SetSizer(h_sizer)
-        
 
 
     def on_quit(self, evt):
@@ -114,10 +112,6 @@ class FileTreeCtrl(wx.TreeCtrl):
         item = evt.GetItem()
         if self.GetPyData(item).node_type == folder.FRAME:
             print "Selected: " + self.GetPyData(item).path
-
-
-
-
 
 a = None
 app = wx.App()
