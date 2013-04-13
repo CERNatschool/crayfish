@@ -125,7 +125,7 @@ class RenderPanel(wx.Panel):
 
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
-        self.fig = plt.figure()
+        self.fig = matplotlib.figure.Figure()
         self.canvas = FigureCanvas(self, -1, self.fig)
 
 class TraceRender(RenderPanel):
