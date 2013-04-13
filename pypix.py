@@ -96,9 +96,14 @@ class PixelGrid(dict):
 
 
     def render_energy(self):
-        max_count = float(self.max_count)
-        return [[self[x,y].value / max_count
-                for x in range(self.width)] for y in range(self.height)]
+        # Old, slower algorithm
+        # return [[self[x,y].value
+        #         for x in range(self.width)] for y in range(self.height)]
+        grid = [[0]*self.width for _ in range(self.height)]
+        for pixel in self.hit_pixels:
+            x, y = pixel
+            grid[y][x] = self[pixel].value
+        return grid
 
 class Frame(PixelGrid):
 
