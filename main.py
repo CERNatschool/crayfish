@@ -133,7 +133,8 @@ class RenderPanel(wx.Panel):
         self.fig = matplotlib.figure.Figure()
         self.canvas = FigureCanvas(self, -1, self.fig)
         self.axes = self.fig.add_axes([0,0,1,1])
-        #self.Bind(wx.EVT_SIZE, self.on_size)
+        self.Bind(wx.EVT_SIZE, self.on_size)
+        self.fig.canvas.mpl_connect('motion_notify_event', self.on_motion)
 
         centre_sizer = wx.BoxSizer(wx.HORIZONTAL)
         centre_sizer.Add(self.canvas, 1, wx.ALIGN_CENTRE | wx.EXPAND)
@@ -142,6 +143,18 @@ class RenderPanel(wx.Panel):
     def on_size(self, evt):
         min_dim = min(self.GetSize())
         self.canvas.SetSize((min_dim, min_dim))
+
+    def on_motion(self, event):
+        # Parameter event as this is a matplotlib event, not wx
+        self._mouse_to_frame_coords(event.x, event.y)
+
+
+    def _mouse_to_frame_coords(self, mouse_x, mouse_y):
+        img_w, img_h = self.canvas.get_width_height()
+        frame_x = int((mouse_x * 255)/img_w)
+        frame_y = int((mouse_y * 255)/img_h)
+        return frame_x, frame_y
+
 
 class TraceRender(RenderPanel):
 

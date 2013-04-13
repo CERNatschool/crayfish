@@ -95,14 +95,18 @@ class PixelGrid(dict):
             + " " + str(self[pixel]) for pixel in self.hit_pixels])
 
 
-    def render_energy(self):
+    def render_energy(self, min_x = 0, min_y = 0, max_x = None,
+            max_y = None):
         # Old, slower algorithm
         # return [[self[x,y].value
         #         for x in range(self.width)] for y in range(self.height)]
-        grid = [[0]*self.width for _ in range(self.height)]
+        if not max_x: max_x = self.width
+        if not max_y: max_y = self.height
+        grid = [[0]*(max_x-min_x) for _ in range(max_y-min_y)]
         for pixel in self.hit_pixels:
             x, y = pixel
-            grid[y][x] = self[pixel].value
+            if  (min_x <= x <= max_x and min_y <= y <= max_y):
+                grid[y-min_y][x-min_x] = self[pixel].value
         return grid
 
 class Frame(PixelGrid):
