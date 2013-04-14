@@ -1,10 +1,19 @@
-attribute_table = {}
+from collections import OrderedDict
+
+attribute_table = OrderedDict()
 
 def attribute(name):
     def decorator(function):
-        attribute_table[name] = function
+        attribute_table[name] = (None,function)
         return function
     return decorator
+
+def has_attributes(this_class):
+    for attribute in attribute_table:
+        if attribute_table[attribute][0] == None:
+            attribute_table[attribute] = (this_class, 
+                    attribute_table[attribute][1])
+    return this_class
 
 class Hit():
     def __init__(self, value,cluster=None):
@@ -14,6 +23,7 @@ class Hit():
     def __str__(self):
         return str(self.value)
 
+@has_attributes
 class PixelGrid(dict):
 
     def __missing__(self, key):
@@ -121,7 +131,7 @@ class PixelGrid(dict):
         if not max_y: max_y = self.max_y
         return [[self[x,y].value
                 for x in range(min_x, max_x+1)] for y in range(min_y, max_y+1)]
-
+@has_attributes
 class Frame(PixelGrid):
 
     def calculate_clusters(self):
@@ -141,6 +151,13 @@ class Frame(PixelGrid):
                 cluster.add(pixel, self[pixel])
                 # Cluster now has more pixels, so check for new neighbours
                 self._add_neighbouring_pixels(cluster)
+
+    @property
+    @attribute("No. of clusters")
+    def num_clusters(self):
+        if not self.clusters:
+            self.calculate_clusters()
+        return len(self.clusters)
 
 
     @staticmethod
@@ -174,6 +191,7 @@ class Frame(PixelGrid):
         return min(square_distances, key=lambda x: x[1])[0]
 
 
+@has_attributes
 class Cluster(PixelGrid):
 
     def __init__(self, width, height):
@@ -199,11 +217,13 @@ class Cluster(PixelGrid):
         return self.max_y - self.min_y
 
     @property
+    @attribute("Geo. centre")
     def geometric_centre(self):
         return (self.cluster_width/2.0 + self.min_x,
                 self.cluster_height/2.0 + self.min_y)
 
     @property
+    @attribute("C. of mass")
     def centre_of_mass(self):
         weighted_hits = [tuple([self[hit].value * coord for coord in hit])
                 for hit in self.hit_pixels]
@@ -212,6 +232,7 @@ class Cluster(PixelGrid):
         return (sum(x_coords)/total_weight, sum(y_coords)/total_weight)
 
     @property
+    @attribute("Radius")
     def radius(self):
         # Call centre of mass once to save computing multiple times
         cofm_x, cofm_y = self.centre_of_mass

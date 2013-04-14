@@ -223,17 +223,32 @@ class ViewPanel(wx.Panel):
 class AttributeTable(wx.ListCtrl):
     
     def __init__(self, parent):
-        wx.ListCtrl.__init__(self, parent, style=wx.LC_REPORT, size=(200,150))
+        wx.ListCtrl.__init__(self, parent, style=wx.LC_REPORT, size=(250,150))
         self.InsertColumn(0,"Attribute")
         self.InsertColumn(1,"Value")
         self.SetColumnWidth(0,100)
-        self.SetColumnWidth(1,100)
+        self.SetColumnWidth(1,130)
 
     def set_attributes(self, obj, attributes):
         self.DeleteAllItems()
-        for i, attribute in enumerate(attributes):
-            insert_pos = self.InsertStringItem(i,attribute)
-            insert_pos = self.SetStringItem(i,1,str(attributes[attribute](obj)))
+        # Don't use enumerate as not every for loop will result in a table row
+        index = 0
+        for attribute in attributes:
+            if isinstance(obj, attributes[attribute][0]):
+                self.InsertStringItem(index,attribute)
+                value = attributes[attribute][1](obj)
+                if isinstance(value, float):
+                    value = "%.2f" % value
+                if isinstance(value, tuple):
+                    new_value = "("
+                    for i in value:
+                        if isinstance(i,float):
+                            new_value += "%.2f, " % i
+                        else:
+                            new_value += str(i) + ", "
+                    value = new_value[:-2]  + ")"
+                self.SetStringItem(index,1,str(value))
+                index += 1
 
 
 app = wx.App()
