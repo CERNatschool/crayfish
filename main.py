@@ -40,20 +40,23 @@ class MainWindow(wx.Frame):
 
         h_sizer = wx.BoxSizer(wx.HORIZONTAL)
         # File Browser Column
-        ext_label = wx.StaticText(window_panel, label="Extension:")
-        self.ext_field = wx.ComboBox(window_panel, value="*.lsc",choices=["*.lsc", "*.ascii"])
+        ext_label = wx.StaticText(window_panel, label="Ext:")
+        self.ext_field = wx.ComboBox(window_panel, size = (70, -1), value="*.lsc",choices=["*.lsc", "*.ascii"])
         self.file_tree = FileTreeCtrl(window_panel, size=(200, -1))
-        open_button = wx.Button(window_panel, wx.ID_OPEN, label="Open Folder")
+        open_button = wx.Button(window_panel, wx.ID_OPEN, size = (80, -1), label="Open...")
+        aggregate_button = wx.Button(window_panel, size=(80, -1), label="Aggregate!")
 
         self.Bind(wx.EVT_BUTTON, self.on_open, open_button)
+        self.Bind(wx.EVT_BUTTON, self.on_aggregate, aggregate_button)
 
         file_sizer = wx.BoxSizer(wx.VERTICAL)
         file_sizer.Add(self.file_tree, 1, wx.EXPAND | wx.TOP | wx.RIGHT | wx.LEFT)
+        file_sizer.Add(aggregate_button, 0, wx.ALIGN_RIGHT | wx.TOP, 5)
         ext_input_sizer = wx.BoxSizer(wx.HORIZONTAL)
         ext_input_sizer.Add(ext_label, 0, wx.TOP, 5)
         ext_input_sizer.Add(self.ext_field, 0,)
+        ext_input_sizer.Add(open_button, 0, wx.TOP, 3)
         file_sizer.Add(ext_input_sizer, 0, wx.ALIGN_RIGHT)
-        file_sizer.Add(open_button, 0, wx.ALIGN_RIGHT)
         h_sizer.Add(file_sizer, 0, wx.EXPAND | wx.ALL, 5)
         # Trace/Graph View Column
         display_notebook = wx.Notebook(window_panel, style = wx.NB_NOPAGETHEME)
@@ -96,6 +99,9 @@ class MainWindow(wx.Frame):
             self.file_tree.set_top_node(folder.FileNode(dialog.GetPath()))
             self.file_tree.extension = self.ext_field.GetValue()
 
+    def on_aggregate(self, evt):
+        pass
+
     def activate_frame(self, frame):
         self.frame = frame
         self.display_trace.render(self.frame)
@@ -105,8 +111,8 @@ class MainWindow(wx.Frame):
     def activate_cluster(self, cluster):
         self.cluster = cluster
         self.trace_zoom_display.render(self.cluster, zoom=True)
-        #TODO: Add cluster specific attributes
         self.settings_view.cluster_table.set_attributes(self.cluster, pypix.attribute_table)
+
 
 class FileTreeCtrl(wx.TreeCtrl):
 
