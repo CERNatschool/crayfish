@@ -1,3 +1,11 @@
+attribute_table = {}
+
+def attribute(name):
+    def decorator(function):
+        attribute_table[name] = function
+        return function
+    return decorator
+
 class Hit():
     def __init__(self, value,cluster=None):
         self.value = value
@@ -24,6 +32,7 @@ class PixelGrid(dict):
         return self.keys()
 
     @property
+    @attribute("No. of hits")
     def num_hits(self):
         return len(self.hit_pixels)
 
@@ -32,24 +41,26 @@ class PixelGrid(dict):
         return [pixel.value for pixel in self.values()]
 
     @property
+    @attribute("Volume")
     def volume(self):
         return sum(self.counts)
 
     @property
+    @attribute("Max. count")
     def max_count(self):
         return max(self.counts)
 
     @property
+    @attribute("Mean count")
     def mean_count(self):
         return float(self.volume)/self.num_hits
 
     @property
+    @attribute("Std. dev.")
     def standard_deviation(self):
         mean_square = (float(sum([count**2 for count in self.counts]))
                 /self.num_hits)
         square_mean = self.mean_count**2
-        print mean_square
-        print square_mean
         return (mean_square - square_mean)**0.5
 
     @property
@@ -95,19 +106,21 @@ class PixelGrid(dict):
             + " " + str(self[pixel]) for pixel in self.hit_pixels])
 
 
-    def render_energy(self, min_x = 0, min_y = 0, max_x = None,
-            max_y = None):
-        # Old, slower algorithm
-        # return [[self[x,y].value
-        #         for x in range(self.width)] for y in range(self.height)]
-        if not max_x: max_x = self.width
-        if not max_y: max_y = self.height
-        grid = [[0]*(max_x-min_x) for _ in range(max_y-min_y)]
+    def render_energy(self):
+        grid = [[0]*self.width for _ in range(self.height)]
         for pixel in self.hit_pixels:
             x, y = pixel
-            if  (min_x <= x <= max_x and min_y <= y <= max_y):
-                grid[y-min_y][x-min_x] = self[pixel].value
+            grid[y][x] = self[pixel].value
         return grid
+
+    def render_energy_zoomed(self, min_x = None, min_y = None, max_x = None,
+            max_y = None):
+        if not min_x: min_x = self.min_x
+        if not max_x: max_x = self.max_x
+        if not min_y: min_y = self.min_y
+        if not max_y: max_y = self.max_y
+        return [[self[x,y].value
+                for x in range(min_x, max_x+1)] for y in range(min_y, max_y+1)]
 
 class Frame(PixelGrid):
 
@@ -143,9 +156,23 @@ class Frame(PixelGrid):
                     frame[pixel] = Hit(int(count))
             frame.width = 256
             frame.height = 256
+            frame.clusters = []
         else:
             raise Exception("File format not supported: " + file_format)
         return frame
+
+    def get_closest_cluster(self, point):
+        if not self.clusters:
+            self.calculate_clusters()
+        x, y = point
+        square_distances = []
+        for cluster in self.clusters:
+            cluster_x, cluster_y = cluster.geometric_centre
+            x_diff = cluster_x - x
+            y_diff = cluster_y - y
+            square_distances.append((cluster, x_diff**2 + y_diff**2))
+        return min(square_distances, key=lambda x: x[1])[0]
+
 
 class Cluster(PixelGrid):
 
@@ -199,3 +226,5 @@ def are_neighbours(pixel1,pixel2):
     x1, y1 = pixel1
     x2, y2 = pixel2
     return abs(x2-x1) <= 1 and abs (y2-y1) <= 1
+
+

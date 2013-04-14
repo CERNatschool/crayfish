@@ -57,9 +57,8 @@ class MainWindow(wx.Frame):
         h_sizer.Add(file_sizer, 0, wx.EXPAND | wx.ALL, 5)
         # Trace/Graph View Column
         display_notebook = wx.Notebook(window_panel, style = wx.NB_NOPAGETHEME)
-        display_trace = TraceRender(display_notebook)
-        self.file_tree.renderer = display_trace
-        display_notebook.AddPage(display_trace, "Trace")
+        self.display_trace = TraceRender(display_notebook)
+        display_notebook.AddPage(self.display_trace, "Trace")
         display_graph = wx.Panel(display_notebook)
         display_notebook.AddPage(display_graph, "Graph")
 
@@ -68,19 +67,24 @@ class MainWindow(wx.Frame):
         h_sizer.Add(centre_sizer, 1, wx.EXPAND)
 
         # Settings Column
+        self.trace_zoom_display = TraceRender(window_panel, size=(250,250), zoom=True)
         settings_notebook = wx.Notebook(window_panel, size = (300, -1), style=wx.NB_NOPAGETHEME)
-        settings_view = wx.Panel(settings_notebook)
-        settings_notebook.AddPage(settings_view, "View")
+        self.settings_view = ViewPanel(settings_notebook)
+        settings_notebook.AddPage(self.settings_view, "View")
         settings_plot = wx.Panel(settings_notebook)
         settings_notebook.AddPage(settings_plot, "Plot")
         settings_classify = wx.Panel(settings_notebook)
         settings_notebook.AddPage(settings_classify, "Classify")
 
         settings_sizer = wx.BoxSizer(wx.VERTICAL)
+        settings_sizer.Add(self.trace_zoom_display, 0, wx.ALIGN_CENTRE | wx.ALL, 16)
         settings_sizer.Add(settings_notebook, 1, wx.EXPAND)
         h_sizer.Add(settings_sizer, 0, wx.EXPAND)
 
         window_panel.SetSizer(h_sizer)
+
+        self.frame = None
+        self.cluster = None
 
 
     def on_quit(self, evt):
@@ -91,6 +95,18 @@ class MainWindow(wx.Frame):
         if dialog.ShowModal() == wx.ID_OK:
             self.file_tree.set_top_node(folder.FileNode(dialog.GetPath()))
             self.file_tree.extension = self.ext_field.GetValue()
+
+    def activate_frame(self, frame):
+        self.frame = frame
+        self.display_trace.render(self.frame)
+        self.settings_view.frame_table.set_attributes(self.frame, pypix.attribute_table)
+        self.frame.calculate_clusters()
+
+    def activate_cluster(self, cluster):
+        self.cluster = cluster
+        self.trace_zoom_display.render(self.cluster, zoom=True)
+        #TODO: Add cluster specific attributes
+        self.settings_view.cluster_table.set_attributes(self.cluster, pypix.attribute_table)
 
 class FileTreeCtrl(wx.TreeCtrl):
 
@@ -124,17 +140,25 @@ class FileTreeCtrl(wx.TreeCtrl):
         item = evt.GetItem()
         if self.GetPyData(item).node_type == folder.FRAME:
             frame = pypix.Frame.from_file(self.GetPyData(item).path)
-            self.renderer.render(frame.render_energy())
+            main_window.activate_frame(frame)
 
 class RenderPanel(wx.Panel):
 
-    def __init__(self, parent):
-        wx.Panel.__init__(self, parent)
+    def __init__(self, parent, size = wx.DefaultSize, zoom = False):
+        wx.Panel.__init__(self, parent, size = size)
         self.fig = matplotlib.figure.Figure()
         self.canvas = FigureCanvas(self, -1, self.fig)
-        self.axes = self.fig.add_axes([0,0,1,1])
-        self.Bind(wx.EVT_SIZE, self.on_size)
-        self.fig.canvas.mpl_connect('motion_notify_event', self.on_motion)
+        if zoom:
+            self.axes = self.fig.add_subplot(111)
+            for tick in self.axes.xaxis.get_major_ticks():
+                tick.label1On = False
+            for tick in self.axes.yaxis.get_major_ticks():
+                tick.label1On = False
+        else:
+            self.axes = self.fig.add_axes([0,0,1,1])
+        self.fig.canvas.mpl_connect("motion_notify_event", self.on_motion)
+        self.fig.canvas.mpl_connect("button_press_event", self.on_mouse)
+        # self.Bind(wx.EVT_SIZE, self.on_size)
 
         centre_sizer = wx.BoxSizer(wx.HORIZONTAL)
         centre_sizer.Add(self.canvas, 1, wx.ALIGN_CENTRE | wx.EXPAND)
@@ -145,9 +169,16 @@ class RenderPanel(wx.Panel):
         self.canvas.SetSize((min_dim, min_dim))
 
     def on_motion(self, event):
-        # Parameter event as this is a matplotlib event, not wx
-        self._mouse_to_frame_coords(event.x, event.y)
+        # Parameter "event", not "evt", as this is a matplotlib event, not wx
+        if main_window.frame:
+            self._mouse_to_frame_coords(event.x, event.y)
 
+    def on_mouse(self, event):
+        # Parameter "event", not "evt", as this is a matplotlib event, not wx
+        if main_window.frame:
+            frame_coords = self._mouse_to_frame_coords(event.x, event.y)
+            cluster = main_window.frame.get_closest_cluster(frame_coords)
+            main_window.activate_cluster(cluster)
 
     def _mouse_to_frame_coords(self, mouse_x, mouse_y):
         img_w, img_h = self.canvas.get_width_height()
@@ -158,11 +189,52 @@ class RenderPanel(wx.Panel):
 
 class TraceRender(RenderPanel):
 
-    def render(self, data):
-        self.axes.imshow(data, origin="lower", interpolation="nearest", cmap="hot", aspect="auto")
+    def render(self, pixelgrid, zoom = False):
+        if zoom:
+            data = pixelgrid.render_energy_zoomed()
+            aspect = None
+        else:
+            data = pixelgrid.render_energy()
+            aspect = "auto"
+        self.axes.imshow(data, origin="lower", interpolation="nearest", cmap="hot", aspect=aspect)
         self.canvas.draw()
+        # Delete older images, unfortunately may cause older image to display on resize
         if len(self.axes.images) > 1:
             self.axes.images =  self.axes.images[:-1]
+
+class ViewPanel(wx.Panel):
+
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent)
+        v_sizer = wx.BoxSizer(wx.VERTICAL)
+
+        cluster_table_label = wx.StaticText(self, label="Cluster Info")
+        self.cluster_table = AttributeTable(self)
+        frame_table_label = wx.StaticText(self, label="Frame Info")
+        self.frame_table = AttributeTable(self)
+
+        v_sizer.Add(cluster_table_label, 0, wx.ALIGN_CENTRE | wx.ALL, 5)
+        v_sizer.Add(self.cluster_table, 0, wx.ALIGN_CENTRE | wx.BOTTOM, 5)
+        v_sizer.Add(frame_table_label, 0, wx.ALIGN_CENTRE | wx.ALL, 5)
+        v_sizer.Add(self.frame_table, 0, wx.ALIGN_CENTRE)
+
+        self.SetSizer(v_sizer)
+
+class AttributeTable(wx.ListCtrl):
+    
+    def __init__(self, parent):
+        wx.ListCtrl.__init__(self, parent, style=wx.LC_REPORT, size=(200,150))
+        self.InsertColumn(0,"Attribute")
+        self.InsertColumn(1,"Value")
+        self.SetColumnWidth(0,100)
+        self.SetColumnWidth(1,100)
+
+    def set_attributes(self, obj, attributes):
+        self.DeleteAllItems()
+        for i, attribute in enumerate(attributes):
+            insert_pos = self.InsertStringItem(i,attribute)
+            insert_pos = self.SetStringItem(i,1,str(attributes[attribute](obj)))
+
 
 app = wx.App()
 
