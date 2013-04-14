@@ -243,6 +243,11 @@ class Cluster(PixelGrid):
             distances_squared.append(x_diff**2 + y_diff**2)
         return max(distances_squared)**0.5
 
+    @property
+    @attribute("Most neighbours")
+    def most_neighbours(self):
+        return self.get_max_neighbours()[0]
+
 def are_neighbours(pixel1,pixel2):
     x1, y1 = pixel1
     x2, y2 = pixel2
