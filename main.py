@@ -194,20 +194,27 @@ class GraphPanel(wx.Panel):
         if self.axes:
             self.axes.clear()
         self.axes = self.fig.add_subplot(111)
-        self.axes.set_xlabel(x_axis)
-        self.axes.set_ylabel(y_axis) 
-        x_function = pypix.plottable_table[x_axis]
-        y_function = pypix.plottable_table[y_axis]
-        plot_clusters = main_window.frame.clusters[:] # Copy list
-        if main_window.cluster:
-            if not main_window.aggregate:
-                #TODO: Can't remove from list as clusters are different obects
-                # due to way aggregate funcion works (makes new clusters/frames)
-                plot_clusters.remove(main_window.cluster)
-            self.axes.plot(x_function(main_window.cluster), y_function(main_window.cluster), "cx")
-        x_values = [x_function(cluster) for cluster in plot_clusters]
-        y_values = [y_function(cluster) for cluster in plot_clusters]
-        self.axes.plot(x_values, y_values, "k.")
+        if y_axis == "Histogram":
+            self.axes.set_xlabel(x_axis)
+            self.axes.set_ylabel("Frequency")
+            x_function = pypix.plottable_table[x_axis]
+            x_values = [x_function(cluster) for cluster in main_window.frame.clusters]
+            self.axes.hist(x_values, 10, histtype='stepfilled')
+        else:
+            self.axes.set_xlabel(x_axis)
+            self.axes.set_ylabel(y_axis)
+            x_function = pypix.plottable_table[x_axis]
+            y_function = pypix.plottable_table[y_axis]
+            plot_clusters = main_window.frame.clusters[:] # Copy list, as we modify it
+            if main_window.cluster:
+                if not main_window.aggregate:
+                    #TODO: Can't remove from list as clusters are different obects
+                    # due to way aggregate funcion works (makes new clusters/frames)
+                    plot_clusters.remove(main_window.cluster)
+                self.axes.plot(x_function(main_window.cluster), y_function(main_window.cluster), "cx")
+            x_values = [x_function(cluster) for cluster in plot_clusters]
+            y_values = [y_function(cluster) for cluster in plot_clusters]
+            self.axes.plot(x_values, y_values, "k.")
         self.canvas.draw()
 
 class RenderPanel(wx.Panel):
