@@ -11,6 +11,12 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 import folder
 import pypix
 
+def ErrorMessage(title, message):
+    msg = wx.MessageDialog(None, message, title, wx.OK | wx.ICON_WARNING)
+    msg.ShowModal()
+    msg.Destroy()
+
+
 class MainWindow(wx.Frame):
 
     def __init__(self, parent, title):
@@ -45,6 +51,8 @@ class MainWindow(wx.Frame):
         self.file_tree = FileTreeCtrl(window_panel, size=(200, -1))
         open_button = wx.Button(window_panel, wx.ID_OPEN, label="Open...")
         self.aggregate_button = wx.Button(window_panel, label="Aggregate")
+        self.aggregate_button.Disable()
+        self.aggregate = False
 
         self.Bind(wx.EVT_BUTTON, self.on_open, open_button)
         self.Bind(wx.EVT_BUTTON, self.on_aggregate, self.aggregate_button)
@@ -102,14 +110,18 @@ class MainWindow(wx.Frame):
 
     def on_aggregate(self, evt):
         file_node = self.file_tree.GetPyData(self.file_tree.GetSelection())
-        self.activate_frame(file_node.calculate_aggregate(self.file_tree.extension))
-        window_panel.aggregate = True
+        aggregate_frame = file_node.calculate_aggregate(self.file_tree.extension)
+        if aggregate_frame.num_hits == 0:
+            ErrorMessage("Aggregation Failure", "No hit pixels were found during the aggregation of the selected folder.")
+        else:
+            self.activate_frame(aggregate_frame)
+        main_window.aggregate = True
 
     def activate_frame(self, frame):
         self.frame = frame
         self.display_trace.render(self.frame)
         self.settings_view.frame_table.set_attributes(self.frame, pypix.attribute_table)
-        self.frame.calculate_clusters()
+        if not main_window.aggregate: self.frame.calculate_clusters()
 
     def activate_cluster(self, cluster):
         self.cluster = cluster
@@ -152,7 +164,7 @@ class FileTreeCtrl(wx.TreeCtrl):
             frame = pypix.Frame.from_file(data.path)
             main_window.activate_frame(frame)
             main_window.aggregate_button.Disable()
-            window_panel.aggregate = False
+            main_window.aggregate = False
         elif data.node_type == folder.DIR:
             main_window.aggregate_button.Enable()
 
@@ -203,7 +215,7 @@ class RenderPanel(wx.Panel):
 
     def on_mouse(self, event):
         # Parameter "event", not "evt", as this is a matplotlib event, not wx
-        if main_window.frame and window_panel.aggregate == False:
+        if main_window.frame and main_window.aggregate == False:
             frame_coords = self._mouse_to_frame_coords(event.x, event.y)
             cluster = main_window.frame.get_closest_cluster(frame_coords)
             main_window.activate_cluster(cluster)

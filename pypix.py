@@ -154,6 +154,15 @@ class PixelGrid(dict):
 @has_attributes
 class Frame(PixelGrid):
 
+    def __init__(self,width=256, height=256, data=None):
+        if data:
+            dict.__init__(self, data)
+        else:
+            dict.__init__(self)
+        self.width = width
+        self.height = height
+        self.clusters = []
+
     def calculate_clusters(self):
         for pixel in self.hit_pixels:
             self[pixel].cluster = None

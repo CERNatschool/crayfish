@@ -16,7 +16,7 @@ class FileNode():
         self.expanded = False
 
     def get_children(self, file_extension):
-        if not self.sub_folders or not self.sub_files:
+        if not (self.sub_folders or self.sub_files):
             for item in os.listdir(self.path):
                 item_path = os.path.join(self.path, item)
                 if os.path.isdir(item_path):
@@ -30,16 +30,16 @@ class FileNode():
         aggregate_frame = pypix.Frame(256, 256)
         self.get_children(file_extension)
         for folder_path in self.sub_folders:
-            file_node = FileNode(folder_path, node_type=DIR)
-            folder_frame = calculate_aggregate(file_extension)
+            folder_frame = folder_path.calculate_aggregate(file_extension)
             aggregate_frame.clusters.append(folder_frame.clusters)
-            for pixel in folder_frame.pixels:
-                aggregate_frame[pixel] += folder_frame[pixel]
-        for frame_path in self.sub_frames:
-            new_frame = Frame.from_file(frame_path)
-            aggregate_frame.clusters.append(new_frame.clusters)
-            for pixel in new_frame.pixels:
-                aggregate_frame[pixel] += folder_frame[pixel]
+            for pixel in folder_frame.hit_pixels:
+                aggregate_frame[pixel] = pypix.Hit(aggregate_frame[pixel].value + folder_frame[pixel].value)
+        for frame in self.sub_files:
+            file_frame = pypix.Frame.from_file(frame.path)
+            file_frame.calculate_clusters()
+            aggregate_frame.clusters.append(file_frame.clusters)
+            for pixel in file_frame.hit_pixels:
+                aggregate_frame[pixel] = pypix.Hit(aggregate_frame[pixel].value + file_frame[pixel].value)
         return aggregate_frame
 
     @property
