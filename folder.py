@@ -31,13 +31,13 @@ class FileNode():
         self.get_children(file_extension)
         for folder_path in self.sub_folders:
             folder_frame = folder_path.calculate_aggregate(file_extension)
-            aggregate_frame.clusters.append(folder_frame.clusters)
+            aggregate_frame.clusters += folder_frame.clusters
             for pixel in folder_frame.hit_pixels:
                 aggregate_frame[pixel] = pypix.Hit(aggregate_frame[pixel].value + folder_frame[pixel].value)
         for frame in self.sub_files:
             file_frame = pypix.Frame.from_file(frame.path)
             file_frame.calculate_clusters()
-            aggregate_frame.clusters.append(file_frame.clusters)
+            aggregate_frame.clusters += file_frame.clusters
             for pixel in file_frame.hit_pixels:
                 aggregate_frame[pixel] = pypix.Hit(aggregate_frame[pixel].value + file_frame[pixel].value)
         return aggregate_frame

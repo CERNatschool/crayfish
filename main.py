@@ -11,6 +11,8 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 import folder
 import pypix
 
+TESTING = False
+
 def ErrorMessage(title, message):
     msg = wx.MessageDialog(None, message, title, wx.OK | wx.ICON_WARNING)
     msg.ShowModal()
@@ -71,8 +73,8 @@ class MainWindow(wx.Frame):
         display_notebook = wx.Notebook(window_panel, style = wx.NB_NOPAGETHEME)
         self.display_trace = TraceRender(display_notebook)
         display_notebook.AddPage(self.display_trace, "Trace")
-        display_graph = wx.Panel(display_notebook)
-        display_notebook.AddPage(display_graph, "Graph")
+        self.display_graph = GraphPanel(display_notebook)
+        display_notebook.AddPage(self.display_graph, "Graph")
 
         centre_sizer = wx.BoxSizer(wx.VERTICAL)
         centre_sizer.Add(display_notebook, 1, wx.EXPAND)
@@ -83,7 +85,7 @@ class MainWindow(wx.Frame):
         settings_notebook = wx.Notebook(window_panel, size = (300, -1), style=wx.NB_NOPAGETHEME)
         self.settings_view = ViewPanel(settings_notebook)
         settings_notebook.AddPage(self.settings_view, "View")
-        settings_plot = wx.Panel(settings_notebook)
+        settings_plot = PlotPanel(settings_notebook)
         settings_notebook.AddPage(settings_plot, "Plot")
         settings_classify = wx.Panel(settings_notebook)
         settings_notebook.AddPage(settings_classify, "Classify")
@@ -98,6 +100,10 @@ class MainWindow(wx.Frame):
         self.frame = None
         self.cluster = None
 
+        if TESTING:
+            self.file_tree.set_top_node(folder.FileNode("/Users/Richard/Projects/Star Centre/"))
+            self.file_tree.extension = self.ext_field.GetValue()
+
 
     def on_quit(self, evt):
         self.Close()
@@ -109,13 +115,14 @@ class MainWindow(wx.Frame):
             self.file_tree.extension = self.ext_field.GetValue()
 
     def on_aggregate(self, evt):
+        main_window.aggregate_button.Disable()
         file_node = self.file_tree.GetPyData(self.file_tree.GetSelection())
         aggregate_frame = file_node.calculate_aggregate(self.file_tree.extension)
         if aggregate_frame.num_hits == 0:
-            ErrorMessage("Aggregation Failure", "No hit pixels were found during the aggregation of the selected folder.")
+            ErrorMessage("Aggregation", "No hit pixels were found during the aggregation of the selected folder.")
         else:
+            main_window.aggregate = True
             self.activate_frame(aggregate_frame)
-        main_window.aggregate = True
 
     def activate_frame(self, frame):
         self.frame = frame
@@ -166,6 +173,7 @@ class FileTreeCtrl(wx.TreeCtrl):
             main_window.aggregate_button.Disable()
             main_window.aggregate = False
         elif data.node_type == folder.DIR:
+            main_window.frame = None
             main_window.aggregate_button.Enable()
 
 
@@ -176,11 +184,31 @@ class GraphPanel(wx.Panel):
         wx.Panel.__init__(self, parent, size = size)
         self.fig = matplotlib.figure.Figure()
         self.canvas = FigureCanvas(self, -1, self.fig)
-        self.axes = self.fig.add_subplot(111)
 
         centre_sizer = wx.BoxSizer(wx.HORIZONTAL)
         centre_sizer.Add(self.canvas, 1, wx.ALIGN_CENTRE | wx.EXPAND)
         self.SetSizer(centre_sizer)
+        self.axes = None
+
+    def render(self, x_axis, y_axis):
+        if self.axes:
+            self.axes.clear()
+        self.axes = self.fig.add_subplot(111)
+        self.axes.set_xlabel(x_axis)
+        self.axes.set_ylabel(y_axis) 
+        x_function = pypix.plottable_table[x_axis]
+        y_function = pypix.plottable_table[y_axis]
+        plot_clusters = main_window.frame.clusters[:] # Copy list
+        if main_window.cluster:
+            if not main_window.aggregate:
+                #TODO: Can't remove from list as clusters are different obects
+                # due to way aggregate funcion works (makes new clusters/frames)
+                plot_clusters.remove(main_window.cluster)
+            self.axes.plot(x_function(main_window.cluster), y_function(main_window.cluster), "cx")
+        x_values = [x_function(cluster) for cluster in plot_clusters]
+        y_values = [y_function(cluster) for cluster in plot_clusters]
+        self.axes.plot(x_values, y_values, "k.")
+        self.canvas.draw()
 
 class RenderPanel(wx.Panel):
 
@@ -242,6 +270,7 @@ class TraceRender(RenderPanel):
         if len(self.axes.images) > 1:
             self.axes.images =  self.axes.images[:-1]
 
+
 class ViewPanel(wx.Panel):
 
     def __init__(self, parent):
@@ -259,6 +288,46 @@ class ViewPanel(wx.Panel):
         v_sizer.Add(self.frame_table, 0, wx.ALIGN_CENTRE)
 
         self.SetSizer(v_sizer)
+
+class PlotPanel(wx.Panel):
+
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent)
+        v_sizer = wx.BoxSizer(wx.VERTICAL)
+
+        dimensions = [dim for dim in pypix.plottable_table]
+
+        x_label = wx.StaticText(self, label= ("Plot x:"))
+        self.x_axis_menu = wx.ComboBox(self, value = dimensions[0], choices=dimensions, style=wx.CB_READONLY)
+        x_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        x_sizer.Add(x_label, 0, wx.TOP, 5)
+        x_sizer.Add(self.x_axis_menu)
+        v_sizer.Add(x_sizer, 0, wx.ALIGN_CENTRE)
+
+        y_label = wx.StaticText(self, label= ("Plot y:"))
+        self.y_axis_menu = wx.ComboBox(self, value = dimensions[1], choices=dimensions + ["Histogram"], style=wx.CB_READONLY)
+        y_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        y_sizer.Add(y_label, 0, wx.TOP, 5)
+        y_sizer.Add(self.y_axis_menu)
+        v_sizer.Add(y_sizer, 0, wx.ALIGN_CENTRE)
+
+        plot_button = wx.Button(self, label = "Plot")
+
+        self.Bind(wx.EVT_BUTTON, self.on_plot, plot_button)
+
+        v_sizer.Add(plot_button, 0, wx.ALIGN_CENTRE)
+
+        self.SetSizer(v_sizer)
+
+    def on_plot(self, evt):
+        if self.x_axis_menu.GetValue() == self.y_axis_menu.GetValue():
+            ErrorMessage("Plot", "Cannot plot the same attribute against itself.")
+            return
+        if not main_window.frame:
+            ErrorMessage("Plot", "No frame to plot. Please select a frame or aggregate a folder.")
+            return
+        main_window.display_graph.render(self.x_axis_menu.GetValue() , self.y_axis_menu.GetValue())
+
 
 class AttributeTable(wx.ListCtrl):
     
