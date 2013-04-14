@@ -2,6 +2,7 @@ import os
 
 import wx
 import matplotlib
+matplotlib.use("WXAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 
