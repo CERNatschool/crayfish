@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 attribute_table = OrderedDict()
+plottable_table = OrderedDict()
 
 def attribute(name):
     def decorator(function):
@@ -15,6 +16,12 @@ def has_attributes(this_class):
                     attribute_table[attribute][1])
     return this_class
 
+def plottable(name):
+    def decorator(function):
+        plottable_table[name] = function
+        return function
+    return decorator
+
 class Hit():
     def __init__(self, value,cluster=None):
         self.value = value
@@ -25,6 +32,14 @@ class Hit():
 
 @has_attributes
 class PixelGrid(dict):
+
+    def __init__(self,width=256, height=256, data=None):
+        if data:
+            dict.__init__(self, data)
+        else:
+            dict.__init__(self)
+        self.width = width
+        self.height = height
 
     def __missing__(self, key):
         if self.in_grid(key):
@@ -42,6 +57,7 @@ class PixelGrid(dict):
         return self.keys()
 
     @property
+    @plottable("No. of Hits")
     @attribute("No. of hits")
     def num_hits(self):
         return len(self.hit_pixels)
@@ -51,21 +67,25 @@ class PixelGrid(dict):
         return [pixel.value for pixel in self.values()]
 
     @property
+    @plottable("Volume")
     @attribute("Volume")
     def volume(self):
         return sum(self.counts)
 
     @property
+    @plottable("Max. count")
     @attribute("Max. count")
     def max_count(self):
         return max(self.counts)
 
     @property
+    @plottable("Mean count")
     @attribute("Mean count")
     def mean_count(self):
         return float(self.volume)/self.num_hits
 
     @property
+    @plottable("Std. dev.")
     @attribute("Std. dev.")
     def standard_deviation(self):
         mean_square = (float(sum([count**2 for count in self.counts]))
@@ -162,7 +182,7 @@ class Frame(PixelGrid):
 
     @staticmethod
     def from_file(filepath, file_format = "lsc"):
-        frame = Frame()
+        frame = Frame(256,256)
         if file_format == "lsc":
             with open(filepath) as f:
                 for line in f:
@@ -171,8 +191,6 @@ class Frame(PixelGrid):
                     pixel, count = line.strip().split()
                     pixel = tuple([int(coord) for coord in pixel.split(",")])
                     frame[pixel] = Hit(int(count))
-            frame.width = 256
-            frame.height = 256
             frame.clusters = []
         else:
             raise Exception("File format not supported: " + file_format)
@@ -193,10 +211,6 @@ class Frame(PixelGrid):
 
 @has_attributes
 class Cluster(PixelGrid):
-
-    def __init__(self, width, height):
-        self.width = 256
-        self.height = 256
 
     def add(self, pixel, hit):
         hit.cluster = self
@@ -232,6 +246,7 @@ class Cluster(PixelGrid):
         return (sum(x_coords)/total_weight, sum(y_coords)/total_weight)
 
     @property
+    @plottable("Radius")
     @attribute("Radius")
     def radius(self):
         # Call centre of mass once to save computing multiple times

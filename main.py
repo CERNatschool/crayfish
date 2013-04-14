@@ -142,6 +142,19 @@ class FileTreeCtrl(wx.TreeCtrl):
             frame = pypix.Frame.from_file(self.GetPyData(item).path)
             main_window.activate_frame(frame)
 
+
+class GraphPanel(wx.Panel):
+
+    def __init__(self, parent, size = wx.DefaultSize, zoom = False):
+        wx.Panel.__init__(self, parent, size = size)
+        self.fig = matplotlib.figure.Figure()
+        self.canvas = FigureCanvas(self, -1, self.fig)
+        self.axes = self.fig.add_subplot(111)
+
+        centre_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        centre_sizer.Add(self.canvas, 1, wx.ALIGN_CENTRE | wx.EXPAND)
+        self.SetSizer(centre_sizer)
+
 class RenderPanel(wx.Panel):
 
     def __init__(self, parent, size = wx.DefaultSize, zoom = False):
