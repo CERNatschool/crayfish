@@ -1,5 +1,6 @@
 import os
 import fnmatch
+import pypix
 
 DIR = 0
 FRAME = 1
@@ -23,6 +24,23 @@ class FileNode():
                 elif fnmatch.fnmatch(item, file_extension):
                     self.sub_files.append(FileNode(item_path, node_type=FRAME))
         return self.sub_folders, self.sub_files
+
+
+    def calculate_aggregate(self, file_extension):
+        aggregate_frame = pypix.Frame(256, 256)
+        self.get_children(file_extension)
+        for folder_path in self.sub_folders:
+            file_node = FileNode(folder_path, node_type=DIR)
+            folder_frame = calculate_aggregate(file_extension)
+            aggregate_frame.clusters.append(folder_frame.clusters)
+            for pixel in folder_frame.pixels:
+                aggregate_frame[pixel] += folder_frame[pixel]
+        for frame_path in self.sub_frames:
+            new_frame = Frame.from_file(frame_path)
+            aggregate_frame.clusters.append(new_frame.clusters)
+            for pixel in new_frame.pixels:
+                aggregate_frame[pixel] += folder_frame[pixel]
+        return aggregate_frame
 
     @property
     def name(self):

@@ -43,15 +43,16 @@ class MainWindow(wx.Frame):
         ext_label = wx.StaticText(window_panel, label="Ext:")
         self.ext_field = wx.ComboBox(window_panel, size = (70, -1), value="*.lsc",choices=["*.lsc", "*.ascii"])
         self.file_tree = FileTreeCtrl(window_panel, size=(200, -1))
-        open_button = wx.Button(window_panel, wx.ID_OPEN, size = (80, -1), label="Open...")
-        aggregate_button = wx.Button(window_panel, size=(80, -1), label="Aggregate!")
+        open_button = wx.Button(window_panel, wx.ID_OPEN, label="Open...")
+        self.aggregate_button = wx.Button(window_panel, label="Aggregate")
 
         self.Bind(wx.EVT_BUTTON, self.on_open, open_button)
-        self.Bind(wx.EVT_BUTTON, self.on_aggregate, aggregate_button)
+        self.Bind(wx.EVT_BUTTON, self.on_aggregate, self.aggregate_button)
 
         file_sizer = wx.BoxSizer(wx.VERTICAL)
         file_sizer.Add(self.file_tree, 1, wx.EXPAND | wx.TOP | wx.RIGHT | wx.LEFT)
-        file_sizer.Add(aggregate_button, 0, wx.ALIGN_RIGHT | wx.TOP, 5)
+        file_sizer.Add(self.aggregate_button, 0, wx.ALIGN_RIGHT | wx.TOP, 5)
+        file_sizer.AddSpacer(5)
         ext_input_sizer = wx.BoxSizer(wx.HORIZONTAL)
         ext_input_sizer.Add(ext_label, 0, wx.TOP, 5)
         ext_input_sizer.Add(self.ext_field, 0,)
@@ -100,7 +101,9 @@ class MainWindow(wx.Frame):
             self.file_tree.extension = self.ext_field.GetValue()
 
     def on_aggregate(self, evt):
-        pass
+        file_node = self.file_tree.GetPyData(self.file_tree.GetSelection())
+        self.activate_frame(file_node.calculate_aggregate(self.file_tree.extension))
+        window_panel.aggregate = True
 
     def activate_frame(self, frame):
         self.frame = frame
@@ -130,7 +133,7 @@ class FileTreeCtrl(wx.TreeCtrl):
 
     def on_expand_node(self, evt):
         parent_tree_node = evt.GetItem()
-        parent_file_node =  self.GetPyData(parent_tree_node)
+        parent_file_node = self.GetPyData(parent_tree_node)
         if not parent_file_node.expanded:
             child_dirs, child_frames = parent_file_node.get_children(self.extension)
             for child_file_node in child_dirs:
@@ -144,9 +147,15 @@ class FileTreeCtrl(wx.TreeCtrl):
 
     def on_select_node(self, evt):
         item = evt.GetItem()
-        if self.GetPyData(item).node_type == folder.FRAME:
-            frame = pypix.Frame.from_file(self.GetPyData(item).path)
+        data = self.GetPyData(item)
+        if data.node_type == folder.FRAME:
+            frame = pypix.Frame.from_file(data.path)
             main_window.activate_frame(frame)
+            main_window.aggregate_button.Disable()
+            window_panel.aggregate = False
+        elif data.node_type == folder.DIR:
+            main_window.aggregate_button.Enable()
+
 
 class RenderPanel(wx.Panel):
 
@@ -181,7 +190,7 @@ class RenderPanel(wx.Panel):
 
     def on_mouse(self, event):
         # Parameter "event", not "evt", as this is a matplotlib event, not wx
-        if main_window.frame:
+        if main_window.frame and window_panel.aggregate == False:
             frame_coords = self._mouse_to_frame_coords(event.x, event.y)
             cluster = main_window.frame.get_closest_cluster(frame_coords)
             main_window.activate_cluster(cluster)
