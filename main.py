@@ -87,7 +87,7 @@ class MainWindow(wx.Frame):
         settings_notebook.AddPage(self.settings_view, "View")
         settings_plot = PlotPanel(settings_notebook)
         settings_notebook.AddPage(settings_plot, "Plot")
-        settings_classify = wx.Panel(settings_notebook)
+        settings_classify = ClassifyPanel(settings_notebook)
         settings_notebook.AddPage(settings_classify, "Classify")
 
         settings_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -304,7 +304,7 @@ class PlotPanel(wx.Panel):
 
         dimensions = [dim for dim in pypix.plottable_table]
 
-        x_label = wx.StaticText(self, label= ("Plot x:"))
+        x_label = wx.StaticText(self, label="Plot x:")
         self.x_axis_menu = wx.ComboBox(self, value = dimensions[0], choices=dimensions, style=wx.CB_READONLY)
         x_sizer = wx.BoxSizer(wx.HORIZONTAL)
         x_sizer.Add(x_label, 0, wx.TOP, 5)
@@ -334,6 +334,21 @@ class PlotPanel(wx.Panel):
             ErrorMessage("Plot", "No frame to plot. Please select a frame or aggregate a folder.")
             return
         main_window.display_graph.render(self.x_axis_menu.GetValue() , self.y_axis_menu.GetValue())
+
+class ClassifyPanel(wx.Panel):
+
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent)
+        v_sizer = wx.BoxSizer(wx.VERTICAL)
+
+        manual_class_label = wx.StaticText(self, label="Set Class")
+        self.manual_class_menu = wx.ComboBox(self, value="Unclassified", choices=["Unclassified", "Alpha", "Beta", "Gamma"], style = wx.CB_READONLY)
+        manual_class_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        manual_class_sizer.Add(manual_class_label, 0, wx.TOP, 5)
+        manual_class_sizer.Add(self.manual_class_menu)
+        v_sizer.Add(manual_class_sizer)
+
+        self.SetSizer(v_sizer)
 
 
 class AttributeTable(wx.ListCtrl):
