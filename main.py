@@ -51,8 +51,8 @@ class MainWindow(wx.Frame):
         self.SetSizer(h_sizer)
 
         # File Browser Column
-        file_select_panel = FileSelectPanel(self)
-        h_sizer.Add(file_select_panel, 0, wx.EXPAND | wx.ALL, 5)
+        self.file_select_panel = FileSelectPanel(self)
+        h_sizer.Add(self.file_select_panel, 0, wx.EXPAND | wx.ALL, 5)
         # Trace/Graph View Column
         display_notebook = wx.Notebook(self, style = wx.NB_NOPAGETHEME)
         self.display_trace = TraceRender(display_notebook)
@@ -60,9 +60,7 @@ class MainWindow(wx.Frame):
         self.display_graph = GraphPanel(display_notebook)
         display_notebook.AddPage(self.display_graph, "Graph")
 
-        centre_sizer = wx.BoxSizer(wx.VERTICAL)
-        centre_sizer.Add(display_notebook, 1, wx.EXPAND)
-        h_sizer.Add(centre_sizer, 1, wx.EXPAND)
+        h_sizer.Add(display_notebook, 1, wx.EXPAND)
 
         # Settings Column
         self.trace_zoom_display = TraceRender(self, size=(250,250), zoom=True)
@@ -86,13 +84,13 @@ class MainWindow(wx.Frame):
     def on_open(self, evt):
         dialog =  wx.DirDialog(self, message="Select containing folder")
         if dialog.ShowModal() == wx.ID_OK:
-            self.file_tree.set_top_node(folder.FileNode(dialog.GetPath()))
-            self.file_tree.extension = self.ext_field.GetValue()
+            self.file_select_panel.file_tree.set_top_node(folder.FileNode(dialog.GetPath()))
+            self.file_select_panel.file_tree.extension = self.file_select_panel.ext_field.GetValue()
 
     def on_aggregate(self, evt):
-        main_window.aggregate_button.Disable()
-        file_node = self.file_tree.GetPyData(self.file_tree.GetSelection())
-        aggregate_frame = file_node.calculate_aggregate(self.file_tree.extension)
+        main_window.file_select_panel.aggregate_button.Disable()
+        file_node = self.file_select_panel.file_tree.GetPyData(self.file_tree.GetSelect())
+        aggregate_frame = file_node.calculate_aggregate(self.file_select_panel.file_tree.extension)
         if aggregate_frame.num_hits == 0:
             display_error_message("Aggregation", "No hit pixels were found during the aggregation of the selected folder.")
         else:
@@ -171,11 +169,11 @@ class FileTreeCtrl(wx.TreeCtrl):
         if data.node_type == folder.FRAME:
             frame = pypix.Frame.from_file(data.path)
             main_window.activate_frame(frame)
-            main_window.aggregate_button.Disable()
+            main_window.file_select_panel.aggregate_button.Disable()
             main_window.aggregate = False
         elif data.node_type == folder.DIR:
             main_window.frame = None
-            main_window.aggregate_button.Enable()
+            main_window.file_select_panel.aggregate_button.Enable()
 
 
 
