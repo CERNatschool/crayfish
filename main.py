@@ -11,9 +11,8 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 import folder
 import pypix
 
-TESTING = False
 
-def ErrorMessage(title, message):
+def display_error_message(title, message):
     msg = wx.MessageDialog(None, message, title, wx.OK | wx.ICON_WARNING)
     msg.ShowModal()
     msg.Destroy()
@@ -27,6 +26,10 @@ class MainWindow(wx.Frame):
 
         self.init_menu_bar()
         self.init_window()
+        self.aggregate = False
+        self.frame = None
+        self.cluster = None
+
         self.Show()
 
     def init_menu_bar(self):
@@ -43,34 +46,15 @@ class MainWindow(wx.Frame):
         self.SetMenuBar(menu_bar)
 
     def init_window(self):
-        window_panel = wx.Panel(self)
-        window_panel.SetBackgroundColour("#5f6059")
-
+        self.SetBackgroundColour("#5f6059")
         h_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.SetSizer(h_sizer)
+
         # File Browser Column
-        ext_label = wx.StaticText(window_panel, label="Ext:")
-        self.ext_field = wx.ComboBox(window_panel, size = (70, -1), value="*.lsc",choices=["*.lsc", "*.ascii"])
-        self.file_tree = FileTreeCtrl(window_panel, size=(200, -1))
-        open_button = wx.Button(window_panel, wx.ID_OPEN, label="Open...")
-        self.aggregate_button = wx.Button(window_panel, label="Aggregate")
-        self.aggregate_button.Disable()
-        self.aggregate = False
-
-        self.Bind(wx.EVT_BUTTON, self.on_open, open_button)
-        self.Bind(wx.EVT_BUTTON, self.on_aggregate, self.aggregate_button)
-
-        file_sizer = wx.BoxSizer(wx.VERTICAL)
-        file_sizer.Add(self.file_tree, 1, wx.EXPAND | wx.TOP | wx.RIGHT | wx.LEFT)
-        file_sizer.Add(self.aggregate_button, 0, wx.ALIGN_RIGHT | wx.TOP, 5)
-        file_sizer.AddSpacer(5)
-        ext_input_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        ext_input_sizer.Add(ext_label, 0, wx.TOP, 5)
-        ext_input_sizer.Add(self.ext_field, 0,)
-        ext_input_sizer.Add(open_button, 0, wx.TOP, 3)
-        file_sizer.Add(ext_input_sizer, 0, wx.ALIGN_RIGHT)
-        h_sizer.Add(file_sizer, 0, wx.EXPAND | wx.ALL, 5)
+        file_select_panel = FileSelectPanel(self)
+        h_sizer.Add(file_select_panel, 0, wx.EXPAND | wx.ALL, 5)
         # Trace/Graph View Column
-        display_notebook = wx.Notebook(window_panel, style = wx.NB_NOPAGETHEME)
+        display_notebook = wx.Notebook(self, style = wx.NB_NOPAGETHEME)
         self.display_trace = TraceRender(display_notebook)
         display_notebook.AddPage(self.display_trace, "Trace")
         self.display_graph = GraphPanel(display_notebook)
@@ -81,8 +65,8 @@ class MainWindow(wx.Frame):
         h_sizer.Add(centre_sizer, 1, wx.EXPAND)
 
         # Settings Column
-        self.trace_zoom_display = TraceRender(window_panel, size=(250,250), zoom=True)
-        settings_notebook = wx.Notebook(window_panel, size = (300, -1), style=wx.NB_NOPAGETHEME)
+        self.trace_zoom_display = TraceRender(self, size=(250,250), zoom=True)
+        settings_notebook = wx.Notebook(self, size = (300, -1), style=wx.NB_NOPAGETHEME)
         self.settings_view = ViewPanel(settings_notebook)
         settings_notebook.AddPage(self.settings_view, "View")
         settings_plot = PlotPanel(settings_notebook)
@@ -94,15 +78,6 @@ class MainWindow(wx.Frame):
         settings_sizer.Add(self.trace_zoom_display, 0, wx.ALIGN_CENTRE | wx.ALL, 16)
         settings_sizer.Add(settings_notebook, 1, wx.EXPAND)
         h_sizer.Add(settings_sizer, 0, wx.EXPAND)
-
-        window_panel.SetSizer(h_sizer)
-
-        self.frame = None
-        self.cluster = None
-
-        if TESTING:
-            self.file_tree.set_top_node(folder.FileNode("/Users/Richard/Projects/Star Centre/"))
-            self.file_tree.extension = self.ext_field.GetValue()
 
 
     def on_quit(self, evt):
@@ -119,7 +94,7 @@ class MainWindow(wx.Frame):
         file_node = self.file_tree.GetPyData(self.file_tree.GetSelection())
         aggregate_frame = file_node.calculate_aggregate(self.file_tree.extension)
         if aggregate_frame.num_hits == 0:
-            ErrorMessage("Aggregation", "No hit pixels were found during the aggregation of the selected folder.")
+            display_error_message("Aggregation", "No hit pixels were found during the aggregation of the selected folder.")
         else:
             main_window.aggregate = True
             self.activate_frame(aggregate_frame)
@@ -136,10 +111,36 @@ class MainWindow(wx.Frame):
         self.settings_view.cluster_table.set_attributes(self.cluster, pypix.attribute_table)
 
 
+class FileSelectPanel(wx.Panel):
+
+    def __init__(self, parent, size = (200, -1)):
+        wx.Panel.__init__(self, parent, size=size)
+
+        ext_label = wx.StaticText(self, label="Ext:")
+        self.ext_field = wx.ComboBox(self, value="*.lsc",choices=["*.lsc", "*.ascii"])
+        self.file_tree = FileTreeCtrl(self)
+        open_button = wx.Button(self, wx.ID_OPEN, label="Open...")
+        self.aggregate_button = wx.Button(self, label="Aggregate")
+        self.aggregate_button.Disable()
+
+        self.Bind(wx.EVT_BUTTON, parent.on_open, open_button)
+        self.Bind(wx.EVT_BUTTON, parent.on_aggregate, self.aggregate_button)
+
+        v_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(v_sizer)
+        v_sizer.Add(self.file_tree, 1, wx.EXPAND)
+        v_sizer.Add(self.aggregate_button, 0, wx.ALIGN_RIGHT | wx.TOP, 5)
+        v_sizer.AddSpacer(5)
+        ext_input_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        ext_input_sizer.Add(ext_label, 0, wx.TOP, 5)
+        ext_input_sizer.Add(self.ext_field, 1)
+        ext_input_sizer.Add(open_button, 0, wx.TOP, 3)
+        v_sizer.Add(ext_input_sizer, 0, wx.ALIGN_RIGHT)
+
 class FileTreeCtrl(wx.TreeCtrl):
 
-    def __init__(self, parent, size):
-        wx.TreeCtrl.__init__(self, parent, size=size)
+    def __init__(self, parent):
+        wx.TreeCtrl.__init__(self, parent)
         self.Bind(wx.EVT_TREE_ITEM_EXPANDING, self.on_expand_node, self)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.on_select_node, self)
 
@@ -328,10 +329,10 @@ class PlotPanel(wx.Panel):
 
     def on_plot(self, evt):
         if self.x_axis_menu.GetValue() == self.y_axis_menu.GetValue():
-            ErrorMessage("Plot", "Cannot plot the same attribute against itself.")
+            display_error_message("Plot", "Cannot plot the same attribute against itself.")
             return
         if not main_window.frame:
-            ErrorMessage("Plot", "No frame to plot. Please select a frame or aggregate a folder.")
+            display_error_message("Plot", "No frame to plot. Please select a frame or aggregate a folder.")
             return
         main_window.display_graph.render(self.x_axis_menu.GetValue() , self.y_axis_menu.GetValue())
 
