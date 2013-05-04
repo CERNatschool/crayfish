@@ -6,11 +6,8 @@ matplotlib.use("WXAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 
-
-
 import folder
 import pypix
-
 
 def display_error_message(title, message):
     msg = wx.MessageDialog(None, message, title, wx.OK | wx.ICON_WARNING)
@@ -22,17 +19,17 @@ class MainWindow(wx.Frame):
 
     def __init__(self, parent, title):
         # Initialise window using parent class
-        wx.Frame.__init__(self, parent, title=title, size = (900, 600))
+        super(MainWindow, self).__init__(parent, title=title, size=(900, 600))
+        self._init_menu_bar()
+        self._init_window()
 
-        self.init_menu_bar()
-        self.init_window()
         self.aggregate = False
         self.frame = None
         self.cluster = None
 
         self.Show()
 
-    def init_menu_bar(self):
+    def _init_menu_bar(self):
         menu_bar = wx.MenuBar()
         file_menu = wx.Menu()
 
@@ -45,7 +42,7 @@ class MainWindow(wx.Frame):
         menu_bar.Append(file_menu, "&File")
         self.SetMenuBar(menu_bar)
 
-    def init_window(self):
+    def _init_window(self):
         self.SetBackgroundColour("#5f6059")
         h_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.SetSizer(h_sizer)
@@ -56,40 +53,40 @@ class MainWindow(wx.Frame):
         # Trace/Graph View Column
         display_notebook = wx.Notebook(self, style = wx.NB_NOPAGETHEME)
         self.display_trace = TraceRender(display_notebook)
-        display_notebook.AddPage(self.display_trace, "Trace")
         self.display_graph = GraphPanel(display_notebook)
+        display_notebook.AddPage(self.display_trace, "Trace")
         display_notebook.AddPage(self.display_graph, "Graph")
 
         h_sizer.Add(display_notebook, 1, wx.EXPAND)
 
-        # Settings Column
+        # Actions Column
         self.trace_zoom_display = TraceRender(self, size=(250,250), zoom=True)
-        settings_notebook = wx.Notebook(self, size = (300, -1), style=wx.NB_NOPAGETHEME)
-        self.settings_view = ViewPanel(settings_notebook)
-        settings_notebook.AddPage(self.settings_view, "View")
-        settings_plot = PlotPanel(settings_notebook)
-        settings_notebook.AddPage(settings_plot, "Plot")
-        settings_classify = ClassifyPanel(settings_notebook)
-        settings_notebook.AddPage(settings_classify, "Classify")
+        actions_notebook = wx.Notebook(self, size = (300, -1), style=wx.NB_NOPAGETHEME)
+        self.view_tab = ViewPanel(actions_notebook)
+        plot_tab = PlotPanel(actions_notebook)
+        classify_tab = ClassifyPanel(actions_notebook)
+        actions_notebook.AddPage(self.view_tab, "View")
+        actions_notebook.AddPage(plot_tab, "Plot")
+        actions_notebook.AddPage(classify_tab, "Classify")
 
-        settings_sizer = wx.BoxSizer(wx.VERTICAL)
-        settings_sizer.Add(self.trace_zoom_display, 0, wx.ALIGN_CENTRE | wx.ALL, 16)
-        settings_sizer.Add(settings_notebook, 1, wx.EXPAND)
-        h_sizer.Add(settings_sizer, 0, wx.EXPAND)
+        actions_sizer = wx.BoxSizer(wx.VERTICAL)
+        actions_sizer.Add(self.trace_zoom_display, 0, wx.ALIGN_CENTRE | wx.ALL, 16)
+        actions_sizer.Add(actions_notebook, 1, wx.EXPAND)
+        h_sizer.Add(actions_sizer, 0, wx.EXPAND)
 
 
     def on_quit(self, evt):
         self.Close()
 
     def on_open(self, evt):
-        dialog =  wx.DirDialog(self, message="Select containing folder")
+        dialog =  wx.DirDialog(self, message="Select folder to open")
         if dialog.ShowModal() == wx.ID_OK:
             self.file_select_panel.file_tree.set_top_node(folder.FileNode(dialog.GetPath()))
             self.file_select_panel.file_tree.extension = self.file_select_panel.ext_field.GetValue()
 
     def on_aggregate(self, evt):
         main_window.file_select_panel.aggregate_button.Disable()
-        file_node = self.file_select_panel.file_tree.GetPyData(self.file_tree.GetSelect())
+        file_node = self.file_select_panel.file_tree.GetPyData(self.file_select_panel.file_tree.GetSelection())
         aggregate_frame = file_node.calculate_aggregate(self.file_select_panel.file_tree.extension)
         if aggregate_frame.num_hits == 0:
             display_error_message("Aggregation", "No hit pixels were found during the aggregation of the selected folder.")
@@ -100,25 +97,26 @@ class MainWindow(wx.Frame):
     def activate_frame(self, frame):
         self.frame = frame
         self.display_trace.render(self.frame)
-        self.settings_view.frame_table.set_attributes(self.frame, pypix.attribute_table)
+        self.view_tab.frame_table.set_attributes(self.frame, pypix.attribute_table)
         if not main_window.aggregate: self.frame.calculate_clusters()
 
     def activate_cluster(self, cluster):
         self.cluster = cluster
         self.trace_zoom_display.render(self.cluster, zoom=True)
-        self.settings_view.cluster_table.set_attributes(self.cluster, pypix.attribute_table)
+        self.view_tab.cluster_table.set_attributes(self.cluster, pypix.attribute_table)
+
 
 
 class FileSelectPanel(wx.Panel):
 
-    def __init__(self, parent, size = (200, -1)):
-        wx.Panel.__init__(self, parent, size=size)
+    def __init__(self, parent, size=(200, -1)):
+        super(FileSelectPanel, self).__init__(parent, size=size)
 
-        ext_label = wx.StaticText(self, label="Ext:")
-        self.ext_field = wx.ComboBox(self, value="*.lsc",choices=["*.lsc", "*.ascii"])
         self.file_tree = FileTreeCtrl(self)
-        open_button = wx.Button(self, wx.ID_OPEN, label="Open...")
         self.aggregate_button = wx.Button(self, label="Aggregate")
+        ext_label = wx.StaticText(self, label="Ext:")
+        self.ext_field = wx.ComboBox(self, value="*.lsc", choices=["*.lsc", "*.ascii"])
+        open_button = wx.Button(self, wx.ID_OPEN, label="Open...")
         self.aggregate_button.Disable()
 
         self.Bind(wx.EVT_BUTTON, parent.on_open, open_button)
@@ -129,16 +127,17 @@ class FileSelectPanel(wx.Panel):
         v_sizer.Add(self.file_tree, 1, wx.EXPAND)
         v_sizer.Add(self.aggregate_button, 0, wx.ALIGN_RIGHT | wx.TOP, 5)
         v_sizer.AddSpacer(5)
-        ext_input_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        ext_input_sizer.Add(ext_label, 0, wx.TOP, 5)
-        ext_input_sizer.Add(self.ext_field, 1)
-        ext_input_sizer.Add(open_button, 0, wx.TOP, 3)
-        v_sizer.Add(ext_input_sizer, 0, wx.ALIGN_RIGHT)
+        open_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        open_sizer.Add(ext_label, 0, wx.TOP, 5)
+        open_sizer.Add(self.ext_field, 1)
+        open_sizer.Add(open_button, 0, wx.TOP, 3)
+        v_sizer.Add(open_sizer, 0, wx.ALIGN_RIGHT)
+
 
 class FileTreeCtrl(wx.TreeCtrl):
 
     def __init__(self, parent):
-        wx.TreeCtrl.__init__(self, parent)
+        super(FileTreeCtrl, self).__init__(parent)
         self.Bind(wx.EVT_TREE_ITEM_EXPANDING, self.on_expand_node, self)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.on_select_node, self)
 
@@ -180,7 +179,7 @@ class FileTreeCtrl(wx.TreeCtrl):
 class GraphPanel(wx.Panel):
 
     def __init__(self, parent, size = wx.DefaultSize, zoom = False):
-        wx.Panel.__init__(self, parent, size = size)
+        super(GraphPanel, self).__init__(parent, size = size)
         self.fig = matplotlib.figure.Figure()
         self.canvas = FigureCanvas(self, -1, self.fig)
 
@@ -219,7 +218,7 @@ class GraphPanel(wx.Panel):
 class RenderPanel(wx.Panel):
 
     def __init__(self, parent, size = wx.DefaultSize, zoom = False):
-        wx.Panel.__init__(self, parent, size = size)
+        super(RenderPanel, self).__init__(parent, size = size)
         self.fig = matplotlib.figure.Figure()
         self.canvas = FigureCanvas(self, -1, self.fig)
         if zoom:
@@ -237,6 +236,8 @@ class RenderPanel(wx.Panel):
         centre_sizer = wx.BoxSizer(wx.HORIZONTAL)
         centre_sizer.Add(self.canvas, 1, wx.ALIGN_CENTRE | wx.EXPAND)
         self.SetSizer(centre_sizer)
+        min_dim = min(self.GetSize())
+        self.canvas.SetSize((min_dim, min_dim))
 
     def on_size(self, evt):
         min_dim = min(self.GetSize())
@@ -280,7 +281,7 @@ class TraceRender(RenderPanel):
 class ViewPanel(wx.Panel):
 
     def __init__(self, parent):
-        wx.Panel.__init__(self, parent)
+        super(ViewPanel, self).__init__(parent)
         v_sizer = wx.BoxSizer(wx.VERTICAL)
 
         cluster_table_label = wx.StaticText(self, label="Cluster Info")
@@ -298,7 +299,7 @@ class ViewPanel(wx.Panel):
 class PlotPanel(wx.Panel):
 
     def __init__(self, parent):
-        wx.Panel.__init__(self, parent)
+        super(PlotPanel, self).__init__(parent)
         v_sizer = wx.BoxSizer(wx.VERTICAL)
 
         dimensions = [dim for dim in pypix.plottable_table]
@@ -337,7 +338,7 @@ class PlotPanel(wx.Panel):
 class ClassifyPanel(wx.Panel):
 
     def __init__(self, parent):
-        wx.Panel.__init__(self, parent)
+        super(ClassifyPanel, self).__init__(parent)
         v_sizer = wx.BoxSizer(wx.VERTICAL)
 
         manual_class_label = wx.StaticText(self, label="Set Class")
@@ -353,7 +354,7 @@ class ClassifyPanel(wx.Panel):
 class AttributeTable(wx.ListCtrl):
     
     def __init__(self, parent):
-        wx.ListCtrl.__init__(self, parent, style=wx.LC_REPORT, size=(250,150))
+        super(AttributeTable, self).__init__(parent, style=wx.LC_REPORT, size=(250,150))
         self.InsertColumn(0,"Attribute")
         self.InsertColumn(1,"Value")
         self.SetColumnWidth(0,100)
@@ -383,6 +384,6 @@ class AttributeTable(wx.ListCtrl):
 
 app = wx.App()
 
-main_window = MainWindow(None, "Crayfish")
+main_window = MainWindow(None, title="Crayfish")
 
 app.MainLoop()
