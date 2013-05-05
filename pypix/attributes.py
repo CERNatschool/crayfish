@@ -1,22 +1,6 @@
-from collections import OrderedDict
-
-from pypix import *
-
-# Use an ordered dict so that the table maintains the order in which
-# attributes are defined here
-attribute_table = OrderedDict()
-
-def attribute(class_, name, plottable=False, trainable=None):
-    if not trainable:
-        trainable = plottable
-    def decorator(function):
-        attribute_table[name] = (function, class_, plottable, trainable)
-        setattr(class_, function.__name__, property(function))
-        return function
-    return decorator
-
-
-# ==== Attributes begin here and maintain order ====
+from .pypix import *
+# @attribute(Class, Text Label, Plottable = False, Trainable = Plottable)
+# ============== Attributes begin here and maintain order ===============
 
 @attribute(PixelGrid, "No. of hits", True)
 def number_of_hits(self):
