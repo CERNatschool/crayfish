@@ -144,6 +144,11 @@ class Frame(PixelGrid):
 
 class Cluster(PixelGrid):
 
+    def __init__(self):
+        super(Cluster, self).__init__()
+        self.manual_class = "Unclassified"
+        self.alogithm_class = "Unclassified"
+
     def add(self, pixel, hit):
         hit.cluster = self
         self[pixel] = hit
@@ -166,6 +171,6 @@ class Cluster(PixelGrid):
 def are_neighbours(pixel1,pixel2):
     x1, y1 = pixel1
     x2, y2 = pixel2
-    return abs(x2-x1) <= 1 and abs (y2-y1) <= 1
+    return abs(x2 - x1) <= 1 and abs (y2 - y1) <= 1
 
 from .attributes import *

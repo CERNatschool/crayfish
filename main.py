@@ -332,22 +332,41 @@ class TrainPanel(wx.Panel):
     def __init__(self, parent):
         super(TrainPanel, self).__init__(parent)
         v_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(v_sizer)
 
-        manual_class_label = wx.StaticText(self, label="Set Class")
-        self.manual_class_menu = wx.ComboBox(self, value="Unclassified", choices=["Unclassified", "Alpha", "Beta", "Gamma"], style = wx.CB_READONLY)
+        algorithm_class_label = wx.StaticText(self, label="Algorithm Class")
+        self.algorithm_class_display = wx.TextCtrl(self, value="Unclassified", size=(120,-1))
+        algorithm_class_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        algorithm_class_sizer.Add(algorithm_class_label, 0, wx.TOP, 5)
+        algorithm_class_sizer.Add(self.algorithm_class_display)
+        v_sizer.Add(algorithm_class_sizer, 0, wx.ALIGN_RIGHT)
 
+        manual_class_label = wx.StaticText(self, label="Manual Class")
+        self.manual_class_menu = wx.ComboBox(self, value="Unclassified", choices=["Unclassified", "Alpha", "Beta", "Gamma"], style = wx.CB_READONLY, size=(120,-1))
         self.Bind(wx.EVT_COMBOBOX, self.on_manual_set, self.manual_class_menu)
-
         manual_class_sizer = wx.BoxSizer(wx.HORIZONTAL)
         manual_class_sizer.Add(manual_class_label, 0, wx.TOP, 5)
         manual_class_sizer.Add(self.manual_class_menu)
-        v_sizer.Add(manual_class_sizer)
+        v_sizer.Add(manual_class_sizer, 0, wx.ALIGN_RIGHT)
 
-        self.SetSizer(v_sizer)
+        save_trn_data_button = wx.Button(self, label = "Save Training Data")
+        load_trn_data_button = wx.Button(self, label = "Load Training Data")
+        info_text = wx.StaticText(self, label="Load/save applies to current frame, or the currently select folder and its subfolders.")
+        self.Bind(wx.EVT_BUTTON, self.on_training_save, save_trn_data_button)
+        self.Bind(wx.EVT_BUTTON, self.on_training_load, load_trn_data_button)
+
+        v_sizer.Add(save_trn_data_button, 0, wx.TOP | wx.ALIGN_CENTRE, 20)
+        v_sizer.Add(load_trn_data_button, 0, wx.TOP | wx.ALIGN_CENTRE, 10)
+        v_sizer.Add(info_text, 1, wx.TOP | wx.ALIGN_CENTRE | wx.EXPAND, 10)
 
     def on_manual_set(self, evt):
-        if main_window.cluster:
-            main_window.cluster.type = self.manual_class_menu.GetValue()
+        pass
+
+    def on_training_save(self, evt):
+        pass
+
+    def on_training_load(self, evt):
+        pass
 
 
 class AttributeTable(wx.ListCtrl):
