@@ -62,7 +62,7 @@ class MainWindow(wx.Frame):
         actions_notebook = wx.Notebook(self, size = (300, -1), style=wx.NB_NOPAGETHEME)
         self.view_tab = ViewPanel(actions_notebook)
         self.plot_tab = PlotPanel(actions_notebook)
-        self.train_tab = ActionsPanel(actions_notebook)
+        self.train_tab = TrainPanel(actions_notebook)
         self.classify_tab = wx.Panel(actions_notebook)
         actions_notebook.AddPage(self.view_tab, "View")
         actions_notebook.AddPage(self.plot_tab, "Plot")
@@ -293,6 +293,7 @@ class PlotPanel(wx.Panel):
     def __init__(self, parent):
         super(PlotPanel, self).__init__(parent)
         v_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(v_sizer)
 
         dimensions = [dim for dim in pypix.plottable_table]
 
@@ -316,7 +317,6 @@ class PlotPanel(wx.Panel):
 
         v_sizer.Add(plot_button, 0, wx.ALIGN_CENTRE)
 
-        self.SetSizer(v_sizer)
 
     def on_plot(self, evt):
         if self.x_axis_menu.GetValue() == self.y_axis_menu.GetValue():
@@ -327,7 +327,7 @@ class PlotPanel(wx.Panel):
             return
         main_window.display_graph.render(self.x_axis_menu.GetValue() , self.y_axis_menu.GetValue())
 
-class ActionsPanel(wx.Panel):
+class TrainPanel(wx.Panel):
 
     def __init__(self, parent):
         super(ActionsPanel, self).__init__(parent)
@@ -351,7 +351,7 @@ class ActionsPanel(wx.Panel):
 
 
 class AttributeTable(wx.ListCtrl):
-    
+
     def __init__(self, parent):
         super(AttributeTable, self).__init__(parent, style=wx.LC_REPORT, size=(250,120))
         self.InsertColumn(0,"Attribute")
