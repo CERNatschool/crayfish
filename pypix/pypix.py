@@ -160,7 +160,7 @@ class Cluster(PixelGrid):
     def __init__(self, width, height):
         super(Cluster, self).__init__(width, height)
         self.manual_class = "Unclassified"
-        self.alogithm_class = "Unclassified"
+        self.algorithm_class = "Unclassified"
 
     def add(self, pixel, hit):
         hit.cluster = self

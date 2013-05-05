@@ -8,12 +8,8 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 
 import folder
 import pypix
-
-def display_error_message(title, message):
-    msg = wx.MessageDialog(None, message, title, wx.OK | wx.ICON_WARNING)
-    msg.ShowModal()
-    msg.Destroy()
-
+import algorithms
+import error_message
 
 class MainWindow(wx.Frame):
 
@@ -63,7 +59,7 @@ class MainWindow(wx.Frame):
         self.view_tab = ViewPanel(actions_notebook)
         self.plot_tab = PlotPanel(actions_notebook)
         self.train_tab = TrainPanel(actions_notebook)
-        self.classify_tab = wx.Panel(actions_notebook)
+        self.classify_tab = ClassifyPanel(actions_notebook)
         actions_notebook.AddPage(self.view_tab, "View")
         actions_notebook.AddPage(self.plot_tab, "Plot")
         actions_notebook.AddPage(self.train_tab, "Train")
@@ -104,6 +100,7 @@ class MainWindow(wx.Frame):
         self.trace_zoom_display.render(self.cluster)
         self.view_tab.cluster_table.set_attributes(self.cluster)
         self.train_tab.manual_class_menu.SetValue(self.cluster.manual_class)
+        self.train_tab.algorithm_class_display.SetValue(self.cluster.algorithm_class)
 
 
 class FileSelectPanel(wx.Panel):
@@ -287,10 +284,11 @@ class ViewPanel(wx.ScrolledWindow):
 
         self.SetSizer(v_sizer)
 
-class PlotPanel(wx.Panel):
+class PlotPanel(wx.ScrolledWindow):
 
     def __init__(self, parent):
         super(PlotPanel, self).__init__(parent)
+        self.SetScrollRate(1,1)
         v_sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(v_sizer)
 
@@ -326,10 +324,11 @@ class PlotPanel(wx.Panel):
             return
         main_window.display_graph.render(self.x_axis_menu.GetValue() , self.y_axis_menu.GetValue())
 
-class TrainPanel(wx.Panel):
+class TrainPanel(wx.ScrolledWindow):
 
     def __init__(self, parent):
         super(TrainPanel, self).__init__(parent)
+        self.SetScrollRate(1,1)        
         v_sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(v_sizer)
 
@@ -350,7 +349,7 @@ class TrainPanel(wx.Panel):
 
         save_trn_data_button = wx.Button(self, label = "Save Training Data")
         load_trn_data_button = wx.Button(self, label = "Load Training Data")
-        info_text = wx.StaticText(self, label="Load/save applies to current frame, or the currently select folder and its subfolders.")
+        info_text = wx.StaticText(self, label="Load/save applies to current frame, or the currently selected folder and its subfolders.", size=(0,-1))
         self.Bind(wx.EVT_BUTTON, self.on_training_save, save_trn_data_button)
         self.Bind(wx.EVT_BUTTON, self.on_training_load, load_trn_data_button)
 
@@ -383,11 +382,41 @@ class TrainPanel(wx.Panel):
             with open(dialog.GetPath()) as f:
                 UUID_keys = []
                 classes = []
+                next(f) # Skip header row
                 for line in f:
                     data = line.strip().split(",")
                     UUID_keys.append(data[0])
                     classes.append(data[1])
                 main_window.frame.load_training_data(dict(zip(UUID_keys, classes)))
+
+
+class ClassifyPanel(wx.ScrolledWindow):
+
+    def __init__(self, parent):
+        super(ClassifyPanel, self).__init__(parent)
+        self.SetScrollRate(1,1)
+        self.v_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(self.v_sizer)
+        algorithms_list = algorithms.algorithm_table.keys()
+        self.algorithm_select = wx.ComboBox(self, value="None", choices=algorithms_list, style=wx.CB_READONLY)
+        self.Bind(wx.EVT_COMBOBOX, self.on_algorithm_change, self.algorithm_select)
+        self.v_sizer.Add(self.algorithm_select, 0, wx.TOP | wx.ALIGN_CENTER, 5)
+        self.algorithm_panel = None
+
+    def on_algorithm_change(self, evt):
+        self._set_algorithm(self.algorithm_select.GetValue())
+
+    def _set_algorithm(self, algorithm):
+        if self.algorithm_panel:
+            self.v_sizer.Remove(self.algorithm_panel)
+            self.algorithm_panel.Destroy()
+        main_window
+        self.algorithm = algorithms.algorithm_table[algorithm](main_window)
+        self.algorithm_panel = self.algorithm.get_display_panel(self)
+        self.v_sizer.Add(self.algorithm_panel, 1, wx.EXPAND | wx.ALL, 5)
+        self.v_sizer.Layout()
+
+
 
 class AttributeTable(wx.ListCtrl):
 
