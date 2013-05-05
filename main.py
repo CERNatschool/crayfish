@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 
 import folder
-import pypix
+import pypix.pypix as pypix
 
 def display_error_message(title, message):
     msg = wx.MessageDialog(None, message, title, wx.OK | wx.ICON_WARNING)
@@ -97,13 +97,13 @@ class MainWindow(wx.Frame):
     def activate_frame(self, frame):
         self.frame = frame
         self.display_trace.render(self.frame)
-        self.view_tab.frame_table.set_attributes(self.frame, pypix.attribute_table)
+        self.view_tab.frame_table.set_attributes(self.frame)
         if not main_window.aggregate: self.frame.calculate_clusters()
 
     def activate_cluster(self, cluster):
         self.cluster = cluster
         self.trace_zoom_display.render(self.cluster, zoom=True)
-        self.view_tab.cluster_table.set_attributes(self.cluster, pypix.attribute_table)
+        self.view_tab.cluster_table.set_attributes(self.cluster)
 
 
 
@@ -248,14 +248,14 @@ class GraphRender(RenderPanel):
         if y_axis == "Histogram":
             self.axes.set_xlabel(x_axis)
             self.axes.set_ylabel("Frequency")
-            x_function = pypix.plottable_table[x_axis]
+            x_function = pypix.attribute_table[x_axis][0]
             x_values = [x_function(cluster) for cluster in main_window.frame.clusters]
             self.axes.hist(x_values, 10, histtype='stepfilled')
         else:
             self.axes.set_xlabel(x_axis)
             self.axes.set_ylabel(y_axis)
-            x_function = pypix.plottable_table[x_axis]
-            y_function = pypix.plottable_table[y_axis]
+            x_function = pypix.attribute_table[x_axis][0]
+            y_function = pypix.attribute_table[y_axis][0]
             plot_clusters = main_window.frame.clusters[:] # Copy list, as we modify it
             if main_window.cluster:
                 if not main_window.aggregate:
@@ -277,9 +277,9 @@ class ViewPanel(wx.ScrolledWindow):
         v_sizer = wx.BoxSizer(wx.VERTICAL)
 
         cluster_table_label = wx.StaticText(self, label="Cluster Info")
-        self.cluster_table = AttributeTable(self)
+        self.cluster_table = AttributeTable(self, pypix.Cluster)
         frame_table_label = wx.StaticText(self, label="Frame Info")
-        self.frame_table = AttributeTable(self)
+        self.frame_table = AttributeTable(self, pypix.Frame)
 
         v_sizer.Add(cluster_table_label, 0, wx.ALIGN_CENTRE | wx.ALL, 5)
         v_sizer.Add(self.cluster_table, 1, wx.ALIGN_CENTRE | wx.BOTTOM, 5)
@@ -295,7 +295,7 @@ class PlotPanel(wx.Panel):
         v_sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(v_sizer)
 
-        dimensions = [dim for dim in pypix.plottable_table]
+        dimensions = [dim for dim in pypix.attribute_table if dim[2]]
 
         x_label = wx.StaticText(self, label="Plot x:")
         self.x_axis_menu = wx.ComboBox(self, value = dimensions[0], choices=dimensions, style=wx.CB_READONLY)
@@ -330,7 +330,7 @@ class PlotPanel(wx.Panel):
 class TrainPanel(wx.Panel):
 
     def __init__(self, parent):
-        super(ActionsPanel, self).__init__(parent)
+        super(TrainPanel, self).__init__(parent)
         v_sizer = wx.BoxSizer(wx.VERTICAL)
 
         manual_class_label = wx.StaticText(self, label="Set Class")
@@ -352,33 +352,34 @@ class TrainPanel(wx.Panel):
 
 class AttributeTable(wx.ListCtrl):
 
-    def __init__(self, parent):
-        super(AttributeTable, self).__init__(parent, style=wx.LC_REPORT, size=(250,120))
+    def __init__(self, parent, obj_type):
+        super(AttributeTable, self).__init__(parent, style=wx.LC_REPORT, size=(250,150))
         self.InsertColumn(0,"Attribute")
         self.InsertColumn(1,"Value")
         self.SetColumnWidth(0,100)
         self.SetColumnWidth(1,130)
+        self.attribute_list = []
+        for attr in pypix.attribute_table:
+            if issubclass(obj_type, pypix.attribute_table[attr][1]):
+                self.attribute_list += [(attr, pypix.attribute_table[attr])]
+        # Setup row labels
+        for i, attribute_row in enumerate(self.attribute_list):
+            self.InsertStringItem(i, attribute_row[0])
 
-    def set_attributes(self, obj, attributes):
-        self.DeleteAllItems()
-        # Don't use enumerate as not every for loop will result in a table row
-        index = 0
-        for attribute in attributes:
-            if isinstance(obj, attributes[attribute][0]):
-                self.InsertStringItem(index,attribute)
-                value = attributes[attribute][1](obj)
+    def set_attributes(self, obj):
+        for i, attribute_row in enumerate(self.attribute_list):
+                value = attribute_row[1][0](obj)
                 if isinstance(value, float):
                     value = "%.2f" % value
                 if isinstance(value, tuple):
                     new_value = "("
-                    for i in value:
-                        if isinstance(i,float):
+                    for component in value:
+                        if isinstance(component,float):
                             new_value += "%.2f, " % i
                         else:
                             new_value += str(i) + ", "
                     value = new_value[:-2]  + ")"
-                self.SetStringItem(index,1,str(value))
-                index += 1
+                self.SetStringItem(i,1,str(value))
 
 
 app = wx.App()
