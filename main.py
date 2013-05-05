@@ -368,6 +368,10 @@ class TrainPanel(wx.Panel):
         dialog =  wx.FileDialog(self, message="Select save location", style=wx.FD_SAVE, defaultFile="training_data")
         if dialog.ShowModal() == wx.ID_OK:
             with open(dialog.GetPath(), "w") as f:
+                header = ",".join(["UUID", "Classification"] + [attr for attr in pypix.attribute_table
+                    if issubclass(pypix.Cluster, pypix.attribute_table[attr][1]) and
+                    pypix.attribute_table[attr][3]]) + "\n"
+                f.write(header)
                 f.write(main_window.frame.get_training_rows())
 
     def on_training_load(self, evt):
