@@ -114,15 +114,17 @@ class Frame(PixelGrid):
         return frame
 
     def calculate_clusters(self):
-        for pixel in self.hit_pixels:
-            self[pixel].cluster = None
-        self.clusters = []
-        for pixel in self.hit_pixels:
-            if not self[pixel].cluster:
-                new_cluster = Cluster(256, 256)
-                self.clusters.append(new_cluster)
-                new_cluster.add(pixel, self[pixel])
-                self._add_neighbouring_pixels(new_cluster)
+        if not self.clusters:
+            for pixel in self.hit_pixels:
+                self[pixel].cluster = None
+            self.clusters = []
+            for pixel in self.hit_pixels:
+                if not self[pixel].cluster:
+                    new_cluster = Cluster(256, 256)
+                    self.clusters.append(new_cluster)
+                    new_cluster.add(pixel, self[pixel])
+                    self._add_neighbouring_pixels(new_cluster)
+        return self.clusters
 
     def _add_neighbouring_pixels(self, cluster):
         for pixel in self.hit_pixels:
@@ -142,6 +144,9 @@ class Frame(PixelGrid):
             y_diff = pixel_y - y
             square_distances.append((self[pixel].cluster, x_diff**2 + y_diff**2))
         return min(square_distances, key=lambda x: x[1])[0]
+
+    def get_training_rows(self):
+        return "\n".join([cluster.get_training_row() for cluster in self.clusters])
 
 
 class Cluster(PixelGrid):

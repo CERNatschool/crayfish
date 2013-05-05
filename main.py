@@ -81,14 +81,14 @@ class MainWindow(wx.Frame):
     def on_open(self, evt):
         dialog =  wx.DirDialog(self, message="Select folder to open")
         if dialog.ShowModal() == wx.ID_OK:
-            self.file_select_panel.file_tree.set_top_node(folder.FileNode(dialog.GetPath()))
+            self.file_select_panel.file_tree.set_top_node(folder.FolderNode(dialog.GetPath()))
             self.file_select_panel.file_tree.extension = self.file_select_panel.ext_field.GetValue()
 
     def on_aggregate(self, evt):
         main_window.file_select_panel.aggregate_button.Disable()
         file_node = self.file_select_panel.file_tree.GetPyData(self.file_select_panel.file_tree.GetSelection())
         aggregate_frame = file_node.calculate_aggregate(self.file_select_panel.file_tree.extension)
-        if aggregate_frame.num_hits == 0:
+        if aggregate_frame.number_of_hits == 0:
             display_error_message("Aggregation", "No hit pixels were found during the aggregation of the selected folder.")
         else:
             main_window.aggregate = True
@@ -164,12 +164,11 @@ class FileTreeCtrl(wx.TreeCtrl):
     def on_select_node(self, evt):
         item = evt.GetItem()
         data = self.GetPyData(item)
-        if data.node_type == folder.FRAME:
-            frame = pypix.Frame.from_file(data.path)
-            main_window.activate_frame(frame)
+        if isinstance(data, folder.FrameNode):
+            main_window.activate_frame(data.frame)
             main_window.file_select_panel.aggregate_button.Disable()
             main_window.aggregate = False
-        elif data.node_type == folder.DIR:
+        if isinstance(data, folder.FolderNode):
             main_window.frame = None
             main_window.file_select_panel.aggregate_button.Enable()
 
@@ -386,19 +385,21 @@ class AttributeTable(wx.ListCtrl):
             self.InsertStringItem(i, attribute_row[0])
 
     def set_attributes(self, obj):
+        if hasattr(obj, "clusters"):
+            print obj.clusters
         for i, attribute_row in enumerate(self.attribute_list):
-                value = attribute_row[1][0](obj)
-                if isinstance(value, float):
-                    value = "%.2f" % value
-                if isinstance(value, tuple):
-                    new_value = "("
-                    for component in value:
-                        if isinstance(component,float):
-                            new_value += "%.2f, " % i
-                        else:
-                            new_value += str(i) + ", "
-                    value = new_value[:-2]  + ")"
-                self.SetStringItem(i,1,str(value))
+            value = attribute_row[1][0](obj)
+            if isinstance(value, float):
+                value = "%.2f" % value
+            if isinstance(value, tuple):
+                new_value = "("
+                for component in value:
+                    if isinstance(component,float):
+                        new_value += "%.2f, " % i
+                    else:
+                        new_value += str(i) + ", "
+                value = new_value[:-2]  + ")"
+            self.SetStringItem(i,1,str(value))
 
 
 app = wx.App()
