@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 
 import folder
-import pypix.pypix as pypix
+import pypix
 
 def display_error_message(title, message):
     msg = wx.MessageDialog(None, message, title, wx.OK | wx.ICON_WARNING)
@@ -356,8 +356,8 @@ class AttributeTable(wx.ListCtrl):
         super(AttributeTable, self).__init__(parent, style=wx.LC_REPORT, size=(250,150))
         self.InsertColumn(0,"Attribute")
         self.InsertColumn(1,"Value")
-        self.SetColumnWidth(0,100)
-        self.SetColumnWidth(1,130)
+        self.SetColumnWidth(0,130)
+        self.SetColumnWidth(1,100)
         self.attribute_list = []
         for attr in pypix.attribute_table:
             if issubclass(obj_type, pypix.attribute_table[attr][1]):

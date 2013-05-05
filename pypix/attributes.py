@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-from pypix import *
+from .pypix import *
 
 # Use an ordered dict so that the table maintains the order in which
 # attributes are defined here

@@ -168,4 +168,4 @@ def are_neighbours(pixel1,pixel2):
     x2, y2 = pixel2
     return abs(x2-x1) <= 1 and abs (y2-y1) <= 1
 
-from attributes import *
+from .attributes import *

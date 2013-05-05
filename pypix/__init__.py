@@ -1,1 +1,1 @@
-import pypix
+from .pypix import *
