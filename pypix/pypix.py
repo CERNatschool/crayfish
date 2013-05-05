@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 class Hit(object):
     def __init__(self, value,cluster=None):
         self.value = value
@@ -167,5 +169,18 @@ def are_neighbours(pixel1,pixel2):
     x1, y1 = pixel1
     x2, y2 = pixel2
     return abs(x2-x1) <= 1 and abs (y2-y1) <= 1
+
+# Use an ordered dict so that the table maintains the order in which
+# attributes are defined here
+attribute_table = OrderedDict()
+
+def attribute(class_, name, plottable=False, trainable=None):
+    if not trainable:
+        trainable = plottable
+    def decorator(function):
+        attribute_table[name] = (function, class_, plottable, trainable)
+        setattr(class_, function.__name__, property(function))
+        return function
+    return decorator
 
 from .attributes import *
