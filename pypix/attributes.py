@@ -25,6 +25,8 @@ def standard_deviation(self):
 
 @attribute(Frame, "No. of clusters")
 def number_of_clusters(self):
+    if not self.clusters:
+        self.calculate_clusters()
     return len(self.clusters)
 
 @attribute(Cluster, "Geo. centre")

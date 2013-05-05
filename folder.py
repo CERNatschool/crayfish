@@ -36,7 +36,6 @@ class FolderNode():
             aggregate_frame.clusters += frame.clusters
             for pixel in frame.hit_pixels:
                 aggregate_frame[pixel] = pypix.Hit(aggregate_frame[pixel].value + frame[pixel].value)
-        print aggregate_frame.clusters
         return aggregate_frame
 
     @property

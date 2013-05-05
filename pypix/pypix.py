@@ -88,6 +88,7 @@ class PixelGrid(dict):
         return [[self[x,y].value
                 for x in range(min_x, max_x+1)] for y in range(min_y, max_y+1)]
 
+
 class Frame(PixelGrid):
 
     def __init__(self,width=256, height=256, data=[]):
@@ -146,8 +147,13 @@ class Frame(PixelGrid):
         return min(square_distances, key=lambda x: x[1])[0]
 
     def get_training_rows(self):
-        return "\n".join([cluster.get_training_row() for cluster in self.clusters])
+        return "\n".join([cluster.get_training_row() for cluster in self.clusters if cluster.manual_class != "Unclassified"])
 
+    def load_training_data(self, data):
+        for UUID_key in data:
+            for cluster in self.clusters:
+                if UUID_key == cluster.UUID:
+                    cluster.manual_class = data[UUID_key]
 
 class Cluster(PixelGrid):
 

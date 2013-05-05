@@ -362,11 +362,28 @@ class TrainPanel(wx.Panel):
         main_window.cluster.manual_class = self.manual_class_menu.GetValue()
 
     def on_training_save(self, evt):
-        pass
+        if not main_window.frame:
+            display_error_message("Save Training File","Please select a frame or aggregate a subfolder to save training data from.")
+            return
+        dialog =  wx.FileDialog(self, message="Select save location", style=wx.FD_SAVE, defaultFile="training_data")
+        if dialog.ShowModal() == wx.ID_OK:
+            with open(dialog.GetPath(), "w") as f:
+                f.write(main_window.frame.get_training_rows())
 
     def on_training_load(self, evt):
-        pass
-
+        if not main_window.frame:
+            display_error_message("Load Training File","Please select a frame or aggregate a subfolder to load training data into.")
+            return
+        dialog =  wx.FileDialog(self, message="Select open location")
+        if dialog.ShowModal() == wx.ID_OK:
+            with open(dialog.GetPath()) as f:
+                UUID_keys = []
+                classes = []
+                for line in f:
+                    data = line.strip().split(",")
+                    UUID_keys.append(data[0])
+                    classes.append(data[1])
+                main_window.frame.load_training_data(dict(zip(UUID_keys, classes)))
 
 class AttributeTable(wx.ListCtrl):
 
@@ -385,8 +402,6 @@ class AttributeTable(wx.ListCtrl):
             self.InsertStringItem(i, attribute_row[0])
 
     def set_attributes(self, obj):
-        if hasattr(obj, "clusters"):
-            print obj.clusters
         for i, attribute_row in enumerate(self.attribute_list):
             value = attribute_row[1][0](obj)
             if isinstance(value, float):
