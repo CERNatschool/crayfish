@@ -9,7 +9,9 @@ from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 import folder
 import pypix
 import algorithms
-import error_message
+from error_message import display_error_message
+
+classes = {"Unclassified": ("k"), "Alpha": ("r"), "Beta": ("y"), "Gamma": "b"}
 
 class MainWindow(wx.Frame):
 
@@ -259,9 +261,10 @@ class GraphRender(RenderPanel):
                     # due to way aggregate funcion works (makes new clusters/frames)
                     plot_clusters.remove(main_window.cluster)
                 self.axes.plot(x_function(main_window.cluster), y_function(main_window.cluster), "cx")
-            x_values = [x_function(cluster) for cluster in plot_clusters]
-            y_values = [y_function(cluster) for cluster in plot_clusters]
-            self.axes.plot(x_values, y_values, "k.")
+            for class_ in classes:
+                x_values = [x_function(cluster) for cluster in plot_clusters if cluster.algorithm_class == class_]
+                y_values = [y_function(cluster) for cluster in plot_clusters if cluster.algorithm_class == class_]
+                self.axes.plot(x_values, y_values, classes[class_][0] + ".")
         self.canvas.draw()
 
 
@@ -292,7 +295,7 @@ class PlotPanel(wx.ScrolledWindow):
         v_sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(v_sizer)
 
-        dimensions = [dim for dim in pypix.attribute_table if dim[2]]
+        dimensions = [dim for dim in pypix.attribute_table if pypix.attribute_table[dim][2]]
 
         x_label = wx.StaticText(self, label="Plot x:")
         self.x_axis_menu = wx.ComboBox(self, value = dimensions[0], choices=dimensions, style=wx.CB_READONLY)

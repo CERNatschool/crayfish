@@ -95,7 +95,6 @@ class KNN(MLAlgorithm):
     def classify(self, cluster):
         square_distances = []
         for training_datum in self.training_data:
-            print training_datum
             square_distance = sum([(value - self.functions[i](cluster))**2 for i, value in enumerate(training_datum[1])])
             square_distances.append((training_datum[0], square_distance))
         square_distances.sort(key=lambda x: x[1])
