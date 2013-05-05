@@ -353,7 +353,7 @@ class TrainPanel(wx.Panel):
 class AttributeTable(wx.ListCtrl):
 
     def __init__(self, parent, obj_type):
-        super(AttributeTable, self).__init__(parent, style=wx.LC_REPORT, size=(250,150))
+        super(AttributeTable, self).__init__(parent, style=wx.LC_REPORT, size=(250,120))
         self.InsertColumn(0,"Attribute")
         self.InsertColumn(1,"Value")
         self.SetColumnWidth(0,130)
