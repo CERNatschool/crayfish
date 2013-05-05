@@ -1,3 +1,5 @@
+import hashlib
+
 from .pypix import *
 # @attribute(Class, Text Label, Plottable = False, Trainable = Plottable)
 # ============== Attributes begin here and maintain order ===============
@@ -54,3 +56,7 @@ def radius(self):
 @attribute(Cluster, "Most neighbours", True)
 def most_neighbours(self):
     return self.get_max_neighbours()[0]
+
+@attribute(Cluster, "UUID")
+def UUID(self):
+    return hashlib.sha1(self.ascii_grid).hexdigest()

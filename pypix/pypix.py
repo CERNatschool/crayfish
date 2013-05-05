@@ -146,8 +146,8 @@ class Frame(PixelGrid):
 
 class Cluster(PixelGrid):
 
-    def __init__(self):
-        super(Cluster, self).__init__()
+    def __init__(self, width, height):
+        super(Cluster, self).__init__(width, height)
         self.manual_class = "Unclassified"
         self.alogithm_class = "Unclassified"
 
@@ -163,11 +163,28 @@ class Cluster(PixelGrid):
 
     @property
     def cluster_width(self):
-        return self.max_x - self.min_x
+        return self.max_x - self.min_x +1
 
     @property
     def cluster_height(self):
-        return self.max_y - self.min_y
+        return self.max_y - self.min_y + 1
+
+    @property
+    def ascii_grid(self):
+        grid = [[0] * self.cluster_width for _ in range(self.cluster_height)]
+        for pixel in self.hit_pixels:
+            x, y = pixel
+            grid[y - self.min_y][x - self.min_x] = self[pixel].value
+        # User group convention to have lower origin, so flip
+        grid.reverse()
+        return "\n".join(["\t".join([str(value) for value in row]) for row in grid])
+
+    def get_training_row(self):
+        record = [self.UUID, self.manual_class]
+        record += [str(attribute_table[attr][0](self)) for attr in attribute_table
+                if isinstance(self, attribute_table[attr][1]) and
+                    attribute_table[attr][3]]
+        return ",".join(record)
 
 
 def are_neighbours(pixel1,pixel2):

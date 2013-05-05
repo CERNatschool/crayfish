@@ -98,13 +98,12 @@ class MainWindow(wx.Frame):
         self.frame = frame
         self.display_trace.render(self.frame)
         self.view_tab.frame_table.set_attributes(self.frame)
-        if not main_window.aggregate: self.frame.calculate_clusters()
 
     def activate_cluster(self, cluster):
         self.cluster = cluster
-        self.trace_zoom_display.render(self.cluster, zoom=True)
+        self.trace_zoom_display.render(self.cluster)
         self.view_tab.cluster_table.set_attributes(self.cluster)
-
+        self.train_tab.manual_class_menu.SetValue(self.cluster.manual_class)
 
 
 class FileSelectPanel(wx.Panel):
@@ -193,17 +192,18 @@ class TraceRender(RenderPanel):
 
     def __init__(self, parent, size=None, zoom=False):
         super(TraceRender, self).__init__(parent, size)
-        if zoom:
+        self.zoom = zoom
+        if self.zoom:
             self.axes = self.fig.add_subplot(111)
         else:
             self.axes = self.fig.add_axes([0,0,1,1])
+            self.fig.canvas.mpl_connect("button_press_event", self.on_mouse)
         self.axes.axes.set_xticks([])
         self.axes.axes.set_yticks([])
         self.fig.canvas.mpl_connect("motion_notify_event", self.on_motion)
-        self.fig.canvas.mpl_connect("button_press_event", self.on_mouse)
 
-    def render(self, pixelgrid, zoom = False):
-        if zoom:
+    def render(self, pixelgrid):
+        if self.zoom:
             data = pixelgrid.render_energy_zoomed()
             aspect = None
         else:
@@ -360,7 +360,7 @@ class TrainPanel(wx.Panel):
         v_sizer.Add(info_text, 1, wx.TOP | wx.ALIGN_CENTRE | wx.EXPAND, 10)
 
     def on_manual_set(self, evt):
-        pass
+        main_window.cluster.manual_class = self.manual_class_menu.GetValue()
 
     def on_training_save(self, evt):
         pass
