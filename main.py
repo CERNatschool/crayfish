@@ -11,7 +11,7 @@ import pypix
 import algorithms
 from error_message import display_error_message
 
-classes = {"Unclassified": ("k"), "Alpha": ("r"), "Beta": ("y"), "Gamma": "b"}
+classes = {"Unclassified": ("k"), "Alpha": ("r"), "Beta": ("y"), "Gamma": ("b")}
 
 class MainWindow(wx.Frame):
 
@@ -254,7 +254,7 @@ class GraphRender(RenderPanel):
         super(GraphRender, self).__init__(parent, size=size)
         self.axes = None
 
-    def render(self, x_axis, y_axis):
+    def render(self, x_axis, y_axis, class_property):
         # Delete old plots from memory
         if self.axes:
             self.axes.clear()
@@ -276,8 +276,8 @@ class GraphRender(RenderPanel):
                     plot_clusters.remove(main_window.cluster)
                     self.axes.plot(x_function(main_window.cluster), y_function(main_window.cluster), "cx")
             for class_ in classes:
-                x_values = [x_function(cluster) for cluster in plot_clusters if cluster.algorithm_class == class_]
-                y_values = [y_function(cluster) for cluster in plot_clusters if cluster.algorithm_class == class_]
+                x_values = [x_function(cluster) for cluster in plot_clusters if getattr(cluster, class_property) == class_]
+                y_values = [y_function(cluster) for cluster in plot_clusters if getattr(cluster, class_property) == class_]
                 self.axes.plot(x_values, y_values, classes[class_][0] + ".")
         self.canvas.draw()
 
@@ -313,25 +313,32 @@ class PlotPanel(wx.ScrolledWindow):
 
         dimensions = [dim for dim in pypix.attribute_table if pypix.attribute_table[dim][2]]
 
-        x_label = wx.StaticText(self, label="Plot x:")
-        self.x_axis_menu = wx.ComboBox(self, value = dimensions[0], choices=dimensions, style=wx.CB_READONLY)
+        x_label = wx.StaticText(self, label="Plot x ")
+        self.x_axis_menu = wx.ComboBox(self, value=dimensions[0], choices=dimensions, style=wx.CB_READONLY)
         x_sizer = wx.BoxSizer(wx.HORIZONTAL)
         x_sizer.Add(x_label, 0, wx.TOP, 5)
         x_sizer.Add(self.x_axis_menu)
-        v_sizer.Add(x_sizer, 0, wx.ALIGN_CENTRE)
+        v_sizer.Add(x_sizer, 0, wx.ALIGN_RIGHT | wx.RIGHT, 20)
 
-        y_label = wx.StaticText(self, label= ("Plot y:"))
-        self.y_axis_menu = wx.ComboBox(self, value = dimensions[1], choices=dimensions + ["Histogram"], style=wx.CB_READONLY)
+        y_label = wx.StaticText(self, label= ("Plot y "))
+        self.y_axis_menu = wx.ComboBox(self, value=dimensions[1], choices=dimensions + ["Histogram"], style=wx.CB_READONLY)
         y_sizer = wx.BoxSizer(wx.HORIZONTAL)
         y_sizer.Add(y_label, 0, wx.TOP, 5)
         y_sizer.Add(self.y_axis_menu)
-        v_sizer.Add(y_sizer, 0, wx.ALIGN_CENTRE)
+        v_sizer.Add(y_sizer, 0, wx.ALIGN_RIGHT | wx.RIGHT, 20)
+
+        source_label = wx.StaticText(self, label= ("Class Source "))
+        self.source_menu = wx.ComboBox(self, value = "Manual", choices=["Manual", "Algorithm"], style=wx.CB_READONLY)
+        source_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        source_sizer.Add(source_label, 0, wx.TOP, 5)
+        source_sizer.Add(self.source_menu)
+        v_sizer.Add(source_sizer, 0, wx.ALIGN_RIGHT | wx.RIGHT, 20)
 
         plot_button = wx.Button(self, label = "Plot")
 
         self.Bind(wx.EVT_BUTTON, self.on_plot, plot_button)
 
-        v_sizer.Add(plot_button, 0, wx.ALIGN_CENTRE)
+        v_sizer.Add(plot_button, 0, wx.ALIGN_CENTRE | wx.TOP, 10)
 
 
     def on_plot(self, evt):
@@ -341,7 +348,14 @@ class PlotPanel(wx.ScrolledWindow):
         if not main_window.frame:
             display_error_message("Plot", "No frame to plot. Please select a frame or aggregate a folder.")
             return
-        main_window.display_graph.render(self.x_axis_menu.GetValue() , self.y_axis_menu.GetValue())
+        source = self.source_menu.GetValue()
+        if source == "Manual":
+            class_property = "manual_class"
+        elif source == "Algorithm":
+            class_property = "algorithm_class"
+        else:
+            raise ValueError("Unkown classification data source")
+        main_window.display_graph.render(self.x_axis_menu.GetValue() , self.y_axis_menu.GetValue(), class_property)
 
 class TrainPanel(wx.ScrolledWindow):
 
@@ -429,7 +443,6 @@ class ClassifyPanel(wx.ScrolledWindow):
         if self.algorithm_panel:
             self.v_sizer.Remove(self.algorithm_panel)
             self.algorithm_panel.Destroy()
-        main_window
         self.algorithm = algorithms.algorithm_table[algorithm](main_window)
         self.algorithm_panel = self.algorithm.get_display_panel(self)
         self.v_sizer.Add(self.algorithm_panel, 1, wx.EXPAND | wx.ALL, 5)
