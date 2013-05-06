@@ -1,7 +1,35 @@
+# The attribute list
+#
+# To add an attribute define it as a standard function here.
+#
+# Then apply the attribute function decorator::
+#
+#     @attribute(object_type, name, plottable, trainable)
+#
+# Where:
+#     object_type is the type of object that the attribute is applicable to,
+#     either Frame or Cluster, or PixelGrid for either.
+#
+#     name is a human readable label which is used to identify it in the GUI
+#
+#     plottable is a boolean that describes whether the attribute is polottable on
+#     a graph (may be omitted, defualts to false)
+#
+#     plottable is a boolean that describes whether the attribute is usable in
+#     machine learning algorithms (may be omitted, defualts to the value of
+#     plottable)
+#
+#
+# The attribute functions may be defined in any order. The order in which they are
+# defined here is the order in which they will appear in the GUI
+"""
+.. note:: Although these functions appear in the documentation as functions, they are
+    converted into properties at runtime so do not need to be called with
+    parenthesis.
+"""
 import hashlib
 
 from .pypix import *
-# @attribute(Class, Text Label, Plottable = False, Trainable = Plottable)
 # ============== Attributes begin here and maintain order ===============
 
 @attribute(PixelGrid, "No. of hits", True)
@@ -59,4 +87,8 @@ def most_neighbours(self):
 
 @attribute(Cluster, "UUID")
 def UUID(self):
+    """
+    Return the cluster UUID
+    (SHA1 digest of the cluster.ascii_grid representation).
+    """
     return hashlib.sha1(self.ascii_grid).hexdigest()

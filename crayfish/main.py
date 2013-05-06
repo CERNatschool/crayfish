@@ -413,8 +413,10 @@ class GraphRender(RenderPanel):
         Plots and renders a graph.
 
         Args:
-        x_axis: The attribute to be plotted on the x-axis.
-        y_axis: The attribute to be plotted on the x-axis.
+            x_axis: The attribute to be plotted on the x-axis.
+
+            y_axis: The attribute to be plotted on the x-axis.
+
         class_property: The Python object property of each cluster that should
         be inspected in order to find out the class of each cluster. Used for
         switching between manually and algorithmically assigned cluster class.

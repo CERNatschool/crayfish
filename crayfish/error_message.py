@@ -9,8 +9,9 @@ def display_error_message(title, message):
     Displays a modal error message dialog to the user.
 
     Args:
-    title: The dialog title
-    message: The dialog message
+        title: The dialog title
+
+        message: The dialog message
     """
     msg = wx.MessageDialog(None, message, title, wx.OK | wx.ICON_WARNING)
     msg.ShowModal()
