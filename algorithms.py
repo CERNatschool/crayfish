@@ -43,11 +43,12 @@ class MLAlgorithm(object):
                     missing_items = []
                     if item not in pypix.attribute_table:
                         missing_items.append(item)
-                    if missing_items:
+                if missing_items:
                         display_error_message("Missing Properties",
                                 "The training file contains the following properties that cannot be calculated with this installation of Crayfish, which may cause certain algorithms to fail: "
                                 + ",".join(missing_items))
-                self.train(data)
+            self.train(data)
+            return header
 
     def on_classify(self, evt):
         if not self.is_trained:
@@ -75,11 +76,22 @@ class KNN(MLAlgorithm):
         h_sizer.Add(k_label, 0, wx.TOP, 5)
         h_sizer.Add(self.k_input)
         v_sizer.Add(h_sizer, 0, wx.ALIGN_CENTRE | wx.TOP, 10)
+        v_sizer.Add(wx.StaticText(panel, label="Include Dimensions:"), 0, wx.ALIGN_CENTRE | wx.TOP, 5)
+        self.dim_selector = wx.CheckListBox(panel, size=(200, 120))
+        v_sizer.Add(self.dim_selector, 0, wx.ALIGN_CENTRE, wx.TOP, 2)
         return panel
 
     @property
     def k(self):
         return self.k_input.GetValue()
+
+    def on_train(self, evt):
+        header = super(KNN, self).on_train(evt)
+        # Header will be None if no training file is selected
+        if header:
+            self.dim_selector.Clear()
+            self.dim_selector.Set(header)
+
 
     def train(self, data):
         self.training_data = []
@@ -95,7 +107,7 @@ class KNN(MLAlgorithm):
     def classify(self, cluster):
         square_distances = []
         for training_datum in self.training_data:
-            square_distance = sum([(value - self.functions[i](cluster))**2 for i, value in enumerate(training_datum[1])])
+            square_distance = sum([(value - self.functions[i](cluster))**2 for i, value in enumerate(training_datum[1]) if self.dim_selector.IsSelected(i)])
             square_distances.append((training_datum[0], square_distance))
         square_distances.sort(key=lambda x: x[1])
         nearest_k = square_distances[0:self.k]
