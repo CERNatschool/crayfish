@@ -1,6 +1,8 @@
 import os
 import fnmatch
+
 import pypix
+from error_message import display_error_message
 
 class FolderNode():
     
@@ -18,7 +20,9 @@ class FolderNode():
                 if os.path.isdir(item_path):
                     self.sub_folders.append(FolderNode(item_path))
                 elif fnmatch.fnmatch(item, file_extension):
-                    self.sub_frames.append(FrameNode(item_path))
+                    new_frame = FrameNode(item_path)
+                    if new_frame.loaded_correctly:
+                        self.sub_frames.append(new_frame)
         return self.sub_folders, self.sub_frames
 
     def calculate_aggregate(self, file_extension):
@@ -45,7 +49,15 @@ class FolderNode():
 class FrameNode():
     def __init__(self, path):
         self.path = path
-        self.frame = pypix.Frame.from_file(os.path.abspath(path))
+        self.loaded_correctly = True
+        try:
+            self.frame = pypix.Frame.from_file(os.path.abspath(path))
+        except:
+            display_error_message("Error reading file", "Couldn't read file: %s \nPlease check the formatting." % path)
+            self.loaded_correctly = False
+            return
+
+
 
     @property
     def name(self):

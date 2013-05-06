@@ -97,7 +97,7 @@ class Frame(PixelGrid):
 
     @staticmethod
     def from_file(filepath, file_format = "lsc"):
-        frame = Frame(256,256)
+        frame = Frame()
         if file_format == "lsc":
             with open(filepath) as f:
                 try:

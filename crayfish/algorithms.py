@@ -3,7 +3,7 @@ from collections import Counter
 import wx
 from wx.lib.dialogs import ScrolledMessageDialog
 
-from error_message import *
+from error_message import display_error_message
 
 import pypix
 
