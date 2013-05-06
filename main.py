@@ -50,13 +50,13 @@ class MainWindow(wx.Frame):
         h_sizer.Add(self.file_select_panel, 0, wx.EXPAND | wx.ALL, 5)
         # Trace/Graph View Column
         display_notebook = wx.Notebook(self, style = wx.NB_NOPAGETHEME)
-        self.display_trace = TraceRender(display_notebook)
+        self.display_trace = TraceRenderLarge(display_notebook)
         self.display_graph = GraphRender(display_notebook)
         display_notebook.AddPage(self.display_trace, "Trace")
         display_notebook.AddPage(self.display_graph, "Graph")
         h_sizer.Add(display_notebook, 1, wx.EXPAND)
         # Actions Column
-        self.trace_zoom_display = TraceRender(self, size=(250,250), zoom=True)
+        self.trace_zoom_display = TraceRenderZoom(self, size=(250,250))
         actions_notebook = wx.Notebook(self, size = (300, -1), style=wx.NB_NOPAGETHEME)
         self.view_tab = ViewPanel(actions_notebook)
         self.plot_tab = PlotPanel(actions_notebook)
@@ -175,7 +175,7 @@ class FileTreeCtrl(wx.TreeCtrl):
 
 class RenderPanel(wx.Panel):
 
-    def __init__(self, parent, size = wx.DefaultSize, zoom=False):
+    def __init__(self, parent, size=wx.DefaultSize):
         super(RenderPanel, self).__init__(parent, size=size)
         self.fig = matplotlib.figure.Figure()
         self.canvas = FigureCanvas(self, -1, self.fig)
@@ -186,37 +186,31 @@ class RenderPanel(wx.Panel):
         self.canvas.SetSize((min_dim, min_dim))
 
 
-class TraceRender(RenderPanel):
+class TraceRenderBase(RenderPanel):
 
-    def __init__(self, parent, size=None, zoom=False):
-        super(TraceRender, self).__init__(parent, size)
-        self.zoom = zoom
-        if self.zoom:
-            self.axes = self.fig.add_subplot(111)
-        else:
-            self.axes = self.fig.add_axes([0,0,1,1])
-            self.fig.canvas.mpl_connect("button_press_event", self.on_mouse)
+    def _remove_axis_ticks(self):
         self.axes.axes.set_xticks([])
         self.axes.axes.set_yticks([])
-        self.fig.canvas.mpl_connect("motion_notify_event", self.on_motion)
 
-    def render(self, pixelgrid):
-        if self.zoom:
-            data = pixelgrid.render_energy_zoomed()
-            aspect = None
-        else:
-            data = pixelgrid.render_energy()
-            aspect = "auto"
-        self.axes.imshow(data, origin="lower", interpolation="nearest", cmap="hot", aspect=aspect)
-        self.canvas.draw()
+    def _cleanup_old_images(self):
         # Delete older images, matplotlib requires two in the buffer
         if len(self.axes.images) > 2:
             self.axes.images =  self.axes.images[:-2]
 
-    def on_motion(self, event):
-        # Parameter "event", not "evt", as this is a matplotlib event, not wx
-        if main_window.frame:
-            self._mouse_to_frame_coords(event.x, event.y)
+
+class TraceRenderLarge(TraceRenderBase):
+
+    def __init__(self, parent, size=None):
+        super(TraceRenderLarge, self).__init__(parent, size=size)
+        self.axes = self.fig.add_axes([0,0,1,1])
+        self._remove_axis_ticks()
+        self.fig.canvas.mpl_connect("button_press_event", self.on_mouse)
+
+    def render(self, pixelgrid):
+        data = pixelgrid.render_energy()
+        self.axes.imshow(data, origin="lower", interpolation="nearest", cmap="hot", aspect="auto")
+        self.canvas.draw()
+        self._cleanup_old_images()
 
     def on_mouse(self, event):
         # Parameter "event", not "evt", as this is a matplotlib event, not wx
@@ -226,11 +220,33 @@ class TraceRender(RenderPanel):
             main_window.activate_cluster(cluster)
 
     def _mouse_to_frame_coords(self, mouse_x, mouse_y):
-        img_w, img_h = self.canvas.get_width_height()
-        frame_x = int((mouse_x * 255)/img_w)
-        frame_y = int((mouse_y * 255)/img_h)
-        return frame_x, frame_y
+        if main_window.frame:
+            img_w, img_h = self.canvas.get_width_height()
+            frame_x = int((mouse_x * main_window.frame.width)/img_w)
+            frame_y = int((mouse_y * main_window.frame.height)/img_h)
+            return frame_x, frame_y
 
+class TraceRenderZoom(TraceRenderBase):
+
+    def __init__(self, parent, size=None):
+        super(TraceRenderZoom, self).__init__(parent, size=size)
+        self.axes = self.fig.add_subplot(111)
+        self._remove_axis_ticks()
+        self.fig.canvas.mpl_connect("motion_notify_event", self.on_motion)
+
+    def render(self, pixelgrid):
+        data = pixelgrid.render_energy_zoomed()
+        self.axes.imshow(data, origin="lower", interpolation="nearest", cmap="hot")
+        self.canvas.draw()
+        self._cleanup_old_images()
+
+    def on_motion(self, event):
+        # Parameter "event", not "evt", as this is a matplotlib event, not wx
+        if main_window.cluster and event.xdata and event.ydata:
+            x, y = [int(round(n)) for n in (event.xdata, event.ydata)]
+            x += main_window.cluster.min_x
+            y += main_window.cluster.min_y
+            main_window.view_tab.pixel_info.SetLabel("Pixel (%03d %03d): %d" % (x, y, main_window.cluster[(x,y)].value))
 
 class GraphRender(RenderPanel):
 
@@ -271,19 +287,21 @@ class ViewPanel(wx.ScrolledWindow):
     def __init__(self, parent):
         super(ViewPanel, self).__init__(parent)
         self.SetScrollRate(1,1)
-        v_sizer = wx.BoxSizer(wx.VERTICAL)
 
+        self.pixel_info = wx.StaticText(self, label="Pixel (000,000): ")
         cluster_table_label = wx.StaticText(self, label="Cluster Info")
         self.cluster_table = AttributeTable(self, pypix.Cluster)
         frame_table_label = wx.StaticText(self, label="Frame Info")
         self.frame_table = AttributeTable(self, pypix.Frame)
 
+        v_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(v_sizer)
+        v_sizer.Add(self.pixel_info, 0, wx.ALIGN_CENTRE | wx.ALL, 5)
         v_sizer.Add(cluster_table_label, 0, wx.ALIGN_CENTRE | wx.ALL, 5)
         v_sizer.Add(self.cluster_table, 1, wx.ALIGN_CENTRE | wx.BOTTOM, 5)
         v_sizer.Add(frame_table_label, 0, wx.ALIGN_CENTRE | wx.ALL, 5)
         v_sizer.Add(self.frame_table, 1, wx.ALIGN_CENTRE)
 
-        self.SetSizer(v_sizer)
 
 class PlotPanel(wx.ScrolledWindow):
 
