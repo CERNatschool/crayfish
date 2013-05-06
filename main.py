@@ -256,11 +256,9 @@ class GraphRender(RenderPanel):
             y_function = pypix.attribute_table[y_axis][0]
             plot_clusters = main_window.frame.clusters[:] # Copy list, as we modify it
             if main_window.cluster:
-                if not main_window.aggregate:
-                    #TODO: Can't remove from list as clusters are different obects
-                    # due to way aggregate funcion works (makes new clusters/frames)
+                if main_window.cluster in plot_clusters:
                     plot_clusters.remove(main_window.cluster)
-                self.axes.plot(x_function(main_window.cluster), y_function(main_window.cluster), "cx")
+                    self.axes.plot(x_function(main_window.cluster), y_function(main_window.cluster), "cx")
             for class_ in classes:
                 x_values = [x_function(cluster) for cluster in plot_clusters if cluster.algorithm_class == class_]
                 y_values = [y_function(cluster) for cluster in plot_clusters if cluster.algorithm_class == class_]
