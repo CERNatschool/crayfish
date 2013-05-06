@@ -135,8 +135,8 @@ class MainWindow(wx.Frame):
         """
         main_window.file_select_panel.aggregate_button.Disable()
         file_tree = self.file_select_panel.file_tree
-        file_node = file_tree.GetPyData(self.file_tree.GetSelection())
-        aggregate_frame = file_node.calculate_aggregate(self.file_select_panel.file_tree.extension)
+        file_node = file_tree.GetPyData(file_tree.GetSelection())
+        aggregate_frame = file_node.calculate_aggregate(file_tree.extension)
         if aggregate_frame.number_of_hits == 0:
             display_error_message("Aggregation", 
                     "No hit pixels were found during the aggregation of the selected folder.")

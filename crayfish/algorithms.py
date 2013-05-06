@@ -72,14 +72,14 @@ class MLAlgorithm(object):
             with open(dialog.GetPath()) as f:
                 data = f.readlines()
                 header = data[0].strip().split(",")[2:]
+                missing_items = []
                 for item in header:
-                    missing_items = []
                     if item not in pypix.attribute_table:
                         missing_items.append(item)
                 if missing_items:
-                        display_error_message("Missing Properties",
-                                "The training file contains the following properties that cannot be calculated with this installation of Crayfish, which may cause certain algorithms to fail: "
-                                + ",".join(missing_items))
+                    display_error_message("Missing Properties",
+                            "The training file contains the following properties that cannot be calculated with this installation of Crayfish: "
+                            + ", ".join(missing_items) + ".\nThis may prevent certain algorithms from functioning correctly or at all.")
             self.train(data)
 
     def on_classify(self, evt):

@@ -42,10 +42,14 @@ def volume(self):
 
 @attribute(PixelGrid, "Mean count", True)
 def mean_count(self):
+    if self.number_of_hits == 0: # Don't divide by zero
+        return 0
     return float(self.volume)/self.number_of_hits
 
 @attribute(PixelGrid, "Count std. dev.", True)
 def standard_deviation(self):
+    if self.number_of_hits == 0: #Don't divide by zero
+        return 0
     mean_square = (float(sum([count**2 for count in self.counts]))
             /self.number_of_hits)
     square_mean = self.mean_count**2
