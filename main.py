@@ -263,8 +263,10 @@ class GraphRender(RenderPanel):
             self.axes.set_xlabel(x_axis)
             self.axes.set_ylabel("Frequency")
             x_function = pypix.attribute_table[x_axis][0]
-            x_values = [x_function(cluster) for cluster in main_window.frame.clusters]
-            self.axes.hist(x_values, 10, histtype='stepfilled')
+            for class_ in classes:
+                x_values = [x_function(cluster) for cluster in main_window.frame.clusters if getattr(cluster, class_property) == class_]
+                if x_values:
+                    self.axes.hist(x_values, bins=100, histtype='stepfilled', color=classes[class_][0])
         else:
             self.axes.set_xlabel(x_axis)
             self.axes.set_ylabel(y_axis)
