@@ -1,6 +1,7 @@
 from collections import Counter
 
 import wx
+from wx.lib.dialogs import ScrolledMessageDialog
 
 from error_message import *
 
@@ -25,10 +26,13 @@ class MLAlgorithm(object):
         panel = wx.Panel(parent)
         v_sizer = wx.BoxSizer(wx.VERTICAL)
         panel.SetSizer(v_sizer)
+        info_button = wx.Button(panel, label="Info")
         train_button = wx.Button(panel, label="Train")
         classify_button = wx.Button(panel, label="Classify")
+        panel.Bind(wx.EVT_BUTTON, self.on_info, info_button)
         panel.Bind(wx.EVT_BUTTON, self.on_train, train_button)
         panel.Bind(wx.EVT_BUTTON, self.on_classify, classify_button)
+        v_sizer.Add(info_button, 0, wx.TOP | wx.ALIGN_CENTRE, 5)
         v_sizer.Add(train_button, 0, wx.TOP | wx.ALIGN_CENTRE, 5)
         v_sizer.Add(classify_button, 0, wx.TOP | wx.ALIGN_CENTRE, 5)
         return panel, v_sizer
@@ -60,8 +64,23 @@ class MLAlgorithm(object):
         for cluster in self.main_window.frame.clusters:
             self.classify(cluster)
 
+    def on_info(self, evt):
+        wx.lib.dialogs.ScrolledMessageDialog(None, type(self).info_text, "Algorithm Info").Show()
+
 @algorithm("K Nearest Neighbours")
 class KNN(MLAlgorithm):
+
+    info_text = """\
+            This algorithm finds closest k points to the cluster to be
+            classified when the properties of the training data and the
+            cluster to be classified are plotted on an n-dimensional graph.
+            The algorithm then assigns the modal class of these k points to
+            the cluster to be classified.
+
+            ==Params==
+            k -- The number of closest points to inspect
+            Checkboxes -- Checked attributes will be include in calculations
+            """
 
     def __init__(self, main_window):
         super(KNN, self).__init__(main_window)
