@@ -373,14 +373,17 @@ class TraceRenderZoom(TraceRenderBase):
 
         pixelgrid is a 2d array of integers or floats of the form so that
         pixelgrid[y][x] corresponds to the value of (x, y). The values need not
-        be normalised as this is done by the matplotlib `imshow()` function.
+        be normalised as this is done in the call to matplotlib `imshow()` function.
 
         pixelgrid should the size of one  whole frame but only contain the
         pixels that are wished to be zoomed (ie. the cluster). This method will
         then render the grid clipped to the bounding box of pixels.
         """
         data = pixelgrid.render_energy_zoomed()
-        self.axes.imshow(data, origin="lower", interpolation="nearest", cmap="hot")
+        # Clip the lowest value of the normalisation processes to 1 to ensure
+        # that low value pixels don't apear black
+        self.axes.imshow(data, origin="lower", interpolation="nearest", cmap="hot",
+                norm=matplotlib.colors.Normalize(vmin=1,clip=True))
         self.canvas.draw()
         self._cleanup_old_images()
 
