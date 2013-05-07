@@ -84,7 +84,7 @@ class FrameNode():
         try:
             self.frame = pypix.Frame.from_file(os.path.abspath(path))
         except:
-            display_error_message("Error reading file", "Couldn't read file: %s \nPlease check the formatting." % path)
+            display_error_message("Error Reading File", "Couldn't read file: %s \nPlease check the formatting." % path)
             self.loaded_correctly = False
             return
 
