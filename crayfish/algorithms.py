@@ -89,7 +89,7 @@ class MLAlgorithm(object):
         sub class algorithm to classify each cluster.
         """
         if not self.is_trained:
-            display_error_message("Classification","Algorithm not yet trained. Pleas select a training file by clicking train.")
+            display_error_message("Classification","Algorithm not yet trained. Please select a training file by clicking train.")
             return
         if not self.main_window.frame:
             display_error_message("Classification","Please select a frame or aggregate a subfolder to classify")

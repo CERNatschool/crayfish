@@ -24,8 +24,7 @@
 # defined here is the order in which they will appear in the GUI
 """
 .. note:: Although these functions appear in the documentation as functions, they are
-    converted into properties at runtime so do not need to be called with
-    parenthesis.
+    converted into properties at runtime so do not need to be called with parenthesis.
 """
 import hashlib
 
