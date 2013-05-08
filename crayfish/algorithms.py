@@ -98,11 +98,11 @@ class MLAlgorithm(object):
             self.classify(cluster)
 
     def on_info(self, evt):
-        """""
+        """
         Displays an info dialog with information about the algorithm, reading
         the information from the class docstring.
         """
-        wx.lib.dialogs.ScrolledMessageDialog(None, type(self).__doc__, "Algorithm Info").Show()
+        wx.lib.dialogs.ScrolledMessageDialog(None, self.__class__.__doc__, "Algorithm Info").Show()
 
 
 @algorithm("K Nearest Neighbours")
@@ -214,6 +214,50 @@ class KNN(MLAlgorithm):
         # with the same frequency) and then take the 0th item of this tuple,
         # which is the modal class of the nearest k training points.
         cluster.algorithm_class = Counter(nearest_k_types).most_common(1)[0][0]
+
+
+@algorithm("Simple Volume")
+class SimpleVolume(object):
+    """
+    This algorithm assigns all cluster with volume less than 150 to gamma, all particles with volume between 70 and 400 inclusive to beta, and particles with volume of over 400 to alpha
+    ==Params==
+    None
+    """
+    def __init__(self, main_window):
+        self.main_window = main_window
+
+    def get_display_panel(self, parent):
+        panel = wx.Panel(parent)
+        v_sizer = wx.BoxSizer(wx.VERTICAL)
+        panel.SetSizer(v_sizer)
+        info_button = wx.Button(panel, label="Info")
+        classify_button = wx.Button(panel, label="Classify")
+
+        panel.Bind(wx.EVT_BUTTON, self.on_classify, classify_button)
+        panel.Bind(wx.EVT_BUTTON, self.on_info, info_button)
+
+        v_sizer.Add(info_button, 0, wx.TOP | wx.ALIGN_CENTRE, 5)
+        v_sizer.Add(classify_button, 0, wx.TOP | wx.ALIGN_CENTRE, 5)
+        return panel
+
+    def on_classify(self, evt):
+        for cluster in self.main_window.frame.clusters:
+            self.classify(cluster)
+
+    def classify(self, cluster):
+        if cluster.volume < 150:
+            cluster.algorithm_class = "Gamma"
+        elif cluster.volume > 400:
+            cluster.algorithm_class = "Alpha"
+        else:
+            cluster.algorithm_class = "Beta"
+
+    def on_info(self, evt):
+        """
+        Displays an info dialog with information about the algorithm, reading
+        the information from the class docstring.
+        """
+        wx.lib.dialogs.ScrolledMessageDialog(None, self.__class__.__doc__, "Algorithm Info").Show()
 
 @algorithm("ID3")
 class ID3(MLAlgorithm):
