@@ -64,7 +64,7 @@ class MLAlgorithm(object):
         """
         Prompts the user to select a training file to train the algorithm. This
         class then checks to see if the training file is compatable with this
-        version of Crayfish and then it passes the data to to sub class so to
+        version of Crayfish and then it passes the data to the sub class for it to
         train itself.
         """
         dialog =  wx.FileDialog(None, message="Select training file")
@@ -102,7 +102,8 @@ class MLAlgorithm(object):
         Displays an info dialog with information about the algorithm, reading
         the information from the class docstring.
         """
-        wx.lib.dialogs.ScrolledMessageDialog(None, self.__class__.__doc__, "Algorithm Info").Show()
+        wx.lib.dialogs.ScrolledMessageDialog(None, self.__class__.__doc__,
+                "Algorithm Info").Show()
 
 
 @algorithm("K Nearest Neighbours")
@@ -174,6 +175,7 @@ class KNN(MLAlgorithm):
         attributes = data[0].strip().split(",")[2:]
         # Set dimensions GUI checkbox items
         self.dim_selector.Set(attributes)
+        # Load calculation functions from attribute_table
         self.functions = [pypix.attribute_table[attr][0] for attr in attributes]
         # [1:] To ignore header row and UUID column
         rows = [row.strip().split(",")[1:] for row in data[1:]]
@@ -183,7 +185,7 @@ class KNN(MLAlgorithm):
             # Head of list `[0]` - is the classification,
             # the tail `[1:]` contains the properties
             self.training_data.append((row[0], tuple([float(i) for i in row[1:]])))
-        # Set appropialte limits for k input selector, if we k_input is defined
+        # Set appropialte limits for k_input selector, if k_input is defined
         # (ie. alogorithm is being run in the GUI)
         if hasattr(self, "k_input"):
             self.k_input.SetRange(1,len(self.training_data))
@@ -191,16 +193,17 @@ class KNN(MLAlgorithm):
 
     def classify(self, cluster):
         """
-        Classify cluster
-        The `algorithm_class` attribute of cluster is updated to reflect the
-        estimated cluster
+        Classifies cluster
+
+        The algorithm_class attribute of cluster is set to the result of the
+        classification process.
         """
         square_distances = []
         for training_datum in self.training_data:
             # Sum the squared differences between the training cluster and cluster
             # to be classified for each dimension if the dimension has been
             # specified.
-            square_distance = sum([(value - self.functions[i](cluster))**2
+            square_distance = sum([( value - self.functions[i](cluster) )**2
                                     for i, value in enumerate(training_datum[1])
                                         if self.dim_selector.IsSelected(i)])
             square_distances.append((training_datum[0], square_distance))

@@ -204,7 +204,9 @@ class Frame(PixelGrid):
         y_values = [y + offset for offset in [-1,0,1]]
         new_pixels =  [(i, j) for i in x_values for j in y_values
                 if self.in_grid((i,j)) and self[i,j].value != 0
-            and not self[i,j].cluster] # and  (i,j) != pixel (Don't need to check - this pixel already clustered)
+            and not self[i,j].cluster]  # and  (i,j) != pixel 
+                                        # (Don't need to check as the current
+                                        # pixel will be already clustered)
         # These for loops are done sequentially to prevent a hit from being added twice.
         for new_pixel in new_pixels:
             cluster.add(pixel, self[new_pixel])
@@ -232,7 +234,8 @@ class Frame(PixelGrid):
         """
         Outputs a training row for each manually classified cluster.
         """
-        return "\n".join([cluster.get_training_row() for cluster in self.clusters if cluster.manual_class != "Unclassified"])
+        return "\n".join([cluster.get_training_row() for cluster in self.clusters
+                        if cluster.manual_class != "Unclassified"])
 
     def load_training_data(self, data):
         """
@@ -268,14 +271,14 @@ class Cluster(PixelGrid):
     @property
     def cluster_width(self):
         """
-        The actual width of the cluster.
+        The actual width of the cluster, ie. the bounding box width.
         """
         return self.max_x - self.min_x +1
 
     @property
     def cluster_height(self):
         """
-        The actual height of the cluster
+        The actual height of the cluster, ie. the bounding box height.
         """
         return self.max_y - self.min_y + 1
 
@@ -289,7 +292,7 @@ class Cluster(PixelGrid):
         for pixel in self.hit_pixels:
             x, y = pixel
             grid[y - self.min_y][x - self.min_x] = self[pixel].value
-        # User group convention to have lower origin, so flip
+        # CERN@School/Pixelman convention to have lower origin, so flip matrix vertically.
         grid.reverse()
         return "\n".join(["\t".join([str(value) for value in row]) for row in grid])
 
@@ -306,7 +309,7 @@ class Cluster(PixelGrid):
 
 def are_neighbours(pixel1,pixel2):
     """
-    Return True if if each of the x/y coords if pixel1 and pixel2 differ by two
+    Return True if if each of the x/y coords of pixel1 and pixel2 differ by two
     or less, ie. each pixel not at the edge has 9 neighbours (including
     itself).
     """

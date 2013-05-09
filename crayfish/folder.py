@@ -1,5 +1,5 @@
 """
-Contains function relating to the lazy evulation of the file tree.
+Contains function relating to the lazy evaluation of the file tree.
 """
 import os
 import fnmatch
@@ -55,7 +55,8 @@ class FolderNode():
             folder_frame = folder_path.calculate_aggregate(file_extension)
             aggregate_frame.clusters += folder_frame.clusters
             for pixel in folder_frame.hit_pixels:
-                aggregate_frame[pixel] = pypix.Hit(aggregate_frame[pixel].value + folder_frame[pixel].value)
+                aggregate_frame[pixel] = pypix.Hit(aggregate_frame[pixel].value
+                                                + folder_frame[pixel].value)
         # For each sub frame calculate its clusters if not already calculated
         # and add these clusters (and the frame's pixels) to the aggregate frame
         for frame_file in self.sub_frames:
@@ -64,19 +65,20 @@ class FolderNode():
                 frame.calculate_clusters()
             aggregate_frame.clusters += frame.clusters
             for pixel in frame.hit_pixels:
-                aggregate_frame[pixel] = pypix.Hit(aggregate_frame[pixel].value + frame[pixel].value)
+                aggregate_frame[pixel] = pypix.Hit(aggregate_frame[pixel].value
+                                                + frame[pixel].value)
         return aggregate_frame
 
     @property
     def name(self):
         """
-        Returns the filename of the folder
+        Returns the filename of the folder.
         """
         return os.path.basename(self.path)
 
 class FrameNode():
     """
-    Contains a frame and is responsible for its loading
+    Contains a frame and is responsible for its loading.
     """
     def __init__(self, path):
         self.path = path
@@ -91,6 +93,6 @@ class FrameNode():
     @property
     def name(self):
         """
-        Returns the filename of the frame
+        Returns the filename of the frame.
         """
         return os.path.basename(self.path)
