@@ -1,7 +1,6 @@
 """
-This module exists independently of Crayfish and provides classes relating to
-clusters and frames. Attributes designed for viewing, plotting and training in
-Crayfish are not defined here but instead in pypix/attributes.py
+Attributes designed for viewing, plotting and training in the
+Crayfish UI are not defined here but instead in pypix/attributes.py
 
 Definitions:
     Hit: A hit is any pixel with non zero value
@@ -24,6 +23,7 @@ class Hit(object):
         self.value = value
         self.cluster = None
 
+    # For debug purposes
     def __str__(self):
         return str(self.value)
 
@@ -33,6 +33,13 @@ class PixelGrid(dict):
     applicable to any grid of pixels. Optional data argument may be a
     dictionary mapping (x,y) tuples to Hit objects
     """
+    # PixelGrid dictionary effectively implements a  sparse array. As most of
+    # the values of the 256*256 frame matrix will be 0, this greatly reduces
+    # the memory footprint of the programming, but does require slightly more
+    # processing to access each item in the array. If there is an attempt to
+    # retrieve a pixel co-ord that is not in the dictionary, the method
+    # __missing__ is called, which returns 0 if the pixel coords lie within the
+    # grid, or otherwise raise a KeyError.
     def __init__(self, width, height, data=[]):
         super(PixelGrid, self).__init__(data)
         self.width = width
@@ -108,7 +115,7 @@ class PixelGrid(dict):
         max_neighbours = max(neighbours)
         return max_neighbours, neighbours[max_neighbours]
 
-        # ==Alternative Algorithm==
+        # ==Alternative Algorithm Implementation==
         # neighbours = [(pixel, self.number_of_neighbours(pixel))
         #         for pixel in self.hit_pixels]
         # max_neighbours = max(neighbours, key = lambda x: x[1])[1]
@@ -128,7 +135,7 @@ class PixelGrid(dict):
 
     def render_energy_zoomed(self, min_x = None, min_y = None, max_x = None, max_y = None):
         """
-        Renders a clipped grid with each value corresponding to the ernergy of
+        Renders a clipped grid with each value corresponding to the energy of
         the relevant pixel.
         """
         if not min_x: min_x = self.min_x
@@ -347,4 +354,4 @@ def attribute(class_, name, plottable=False, trainable=None):
     return decorator
 
 # Import attributes
-from .attributes import *
+from attributes import *

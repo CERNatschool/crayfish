@@ -160,8 +160,8 @@ class KNN(MLAlgorithm):
         """
         Trains the algorithm using data, which should be a list of CSV records,
         with the first row being a header, with each header (bar the first two)
-        being used as a key to attribute_table to retrieve the appropiate
-        attribute calculation function.
+        being used as a key to attribute_table, in order to retrieve the
+        appropiate attribute calculation function.
 
         The first entry of each row corresponds to the cluster UUID and is
         ignored as it is not useful for training. The second entry is the
@@ -172,7 +172,7 @@ class KNN(MLAlgorithm):
         # Load attributes from header row, ignoring first two entries (see
         # docsttring)
         attributes = data[0].strip().split(",")[2:]
-        # Set dimensions checkbox items
+        # Set dimensions GUI checkbox items
         self.dim_selector.Set(attributes)
         self.functions = [pypix.attribute_table[attr][0] for attr in attributes]
         # [1:] To ignore header row and UUID column
@@ -214,54 +214,3 @@ class KNN(MLAlgorithm):
         # with the same frequency) and then take the 0th item of this tuple,
         # which is the modal class of the nearest k training points.
         cluster.algorithm_class = Counter(nearest_k_types).most_common(1)[0][0]
-
-
-@algorithm("Simple Volume")
-class SimpleVolume(object):
-    """
-    This algorithm assigns all cluster with volume less than 150 to gamma, all particles with volume between 70 and 400 inclusive to beta, and particles with volume of over 400 to alpha
-    ==Params==
-    None
-    """
-    def __init__(self, main_window):
-        self.main_window = main_window
-
-    def get_display_panel(self, parent):
-        panel = wx.Panel(parent)
-        v_sizer = wx.BoxSizer(wx.VERTICAL)
-        panel.SetSizer(v_sizer)
-        info_button = wx.Button(panel, label="Info")
-        classify_button = wx.Button(panel, label="Classify")
-
-        panel.Bind(wx.EVT_BUTTON, self.on_classify, classify_button)
-        panel.Bind(wx.EVT_BUTTON, self.on_info, info_button)
-
-        v_sizer.Add(info_button, 0, wx.TOP | wx.ALIGN_CENTRE, 5)
-        v_sizer.Add(classify_button, 0, wx.TOP | wx.ALIGN_CENTRE, 5)
-        return panel
-
-    def on_classify(self, evt):
-        for cluster in self.main_window.frame.clusters:
-            self.classify(cluster)
-
-    def classify(self, cluster):
-        if cluster.volume < 150:
-            cluster.algorithm_class = "Gamma"
-        elif cluster.volume > 400:
-            cluster.algorithm_class = "Alpha"
-        else:
-            cluster.algorithm_class = "Beta"
-
-    def on_info(self, evt):
-        """
-        Displays an info dialog with information about the algorithm, reading
-        the information from the class docstring.
-        """
-        wx.lib.dialogs.ScrolledMessageDialog(None, self.__class__.__doc__, "Algorithm Info").Show()
-
-@algorithm("ID3")
-class ID3(MLAlgorithm):
-
-    def get_display_panel(self, parent):
-        panel, v_sizer = super(ID3, self).get_display_panel(parent)
-        return panel

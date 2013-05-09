@@ -28,7 +28,7 @@
 """
 import hashlib
 
-from .pypix import *
+from pypix import *
 # ============== Attributes begin here and maintain order ===============
 
 @attribute(PixelGrid, "No. of hits", True)
