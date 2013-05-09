@@ -182,36 +182,40 @@ class Frame(PixelGrid):
         cached, ie. calling this function will not recalculate clusters if they
         have already been calculated.
 
-        Returns the list of clusters
+        Returns the list of clusters.
         """
         if not self.clusters:
-            for pixel in self.hit_pixels:
-                self[pixel].cluster = None
             self.clusters = []
             for pixel in self.hit_pixels:
-                if not self[pixel].cluster:
+                if not self[pixel].cluster: # If pixel not already clustered
                     new_cluster = Cluster(256, 256)
                     self.clusters.append(new_cluster)
                     new_cluster.add(pixel, self[pixel])
-                    self._add_neighbouring_pixels(new_cluster)
+                    self._add_neighbouring_pixels(pixel, new_cluster)
         return self.clusters
 
-    def _add_neighbouring_pixels(self, cluster):
+    def _add_neighbouring_pixels(self, pixel, cluster):
         """
-        Called recursively whenever a new pixel is added to a cluster. It
-        searches the the list of pixels and if an unclustered pixel neghbours
-        the cluster it adds it to the cluster and calls the function again to
-        check for more neighbours.
+        Adds all pixels neighbours of `pixel` to `cluster` if they are not already
+        clustered.
         """
-        for pixel in self.hit_pixels:
-            if not self[pixel].cluster and cluster.is_neighbour(pixel):
-                cluster.add(pixel, self[pixel])
-                # Cluster now has more pixels, so check for new neighbours
-                self._add_neighbouring_pixels(cluster)
+        x, y = pixel
+        x_values = [x + offset for offset in [-1,0,1]]
+        y_values = [y + offset for offset in [-1,0,1]]
+        new_pixels =  [(i, j) for i in x_values for j in y_values
+                if self.in_grid((i,j)) and self[i,j].value != 0
+            and not self[i,j].cluster] # and  (i,j) != pixel (Don't need to check - this pixel already clustered)
+        # These for loops are done sequentially to prevent a hit from being added twice.
+        for new_pixel in new_pixels:
+            cluster.add(pixel, self[new_pixel])
+        for new_pixel in new_pixels:
+            # Recursively add the neighbours of the new pixel
+            self._add_neighbouring_pixels(new_pixel, cluster)
+
 
     def get_closest_cluster(self, point):
         """
-        Returns the closest clusters to a pixel
+        Returns the closest cluster to a pixel.
         """
         if not self.clusters:
             self.calculate_clusters()
@@ -255,21 +259,11 @@ class Cluster(PixelGrid):
 
     def add(self, pixel, hit):
         """
-        Adds a hit to the cluster, and sets the cluster property of the hit to
+        Adds hit to the cluster at pixel, and sets the cluster property of the hit to
         this cluster.
         """
         hit.cluster = self
         self[pixel] = hit
-
-    def is_neighbour(self, other_pixel):
-        """
-        Returns True if other_pixel neighbours any of the pixels in the
-        cluster.
-        """
-        for pixel in self.hit_pixels:
-            if are_neighbours(pixel, other_pixel):
-                return True
-        return False
 
     @property
     def cluster_width(self):
