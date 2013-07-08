@@ -203,13 +203,13 @@ class Frame(PixelGrid):
         x_values = [x + offset for offset in [-1,0,1]]
         y_values = [y + offset for offset in [-1,0,1]]
         new_pixels =  [(i, j) for i in x_values for j in y_values
-                if self.in_grid((i,j)) and self[i,j].value != 0
-            and not self[i,j].cluster]  # and  (i,j) != pixel 
+                if self.in_grid((i,j)) and self[(i,j)].value != 0
+            and not self[(i,j)].cluster]  # and  (i,j) != pixel 
                                         # (Don't need to check as the current
                                         # pixel will be already clustered)
         # These for loops are done sequentially to prevent a hit from being added twice.
         for new_pixel in new_pixels:
-            cluster.add(pixel, self[new_pixel])
+            cluster.add(new_pixel, self[new_pixel])
         for new_pixel in new_pixels:
             # Recursively add the neighbours of the new pixel
             self._add_neighbouring_pixels(new_pixel, cluster)
