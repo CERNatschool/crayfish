@@ -9,18 +9,21 @@ pypix Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`attributes` Module
-------------------------
+:mod:`pypix` Module
+-------------------
 
-.. automodule:: pypix.attributes
+.. inheritance-diagram:: pypix.pypix
+    :parts: 1
+
+.. automodule:: pypix.pypix
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`pypix` Module
--------------------
+:mod:`attributes` Module
+------------------------
 
-.. automodule:: pypix.pypix
+.. automodule:: pypix.attributes
     :members:
     :undoc-members:
     :show-inheritance:

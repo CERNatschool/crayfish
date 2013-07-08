@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Crayfish documentation build configuration file, created by
-# sphinx-quickstart on Tue May  7 13:59:27 2013.
+# sphinx-quickstart on Thu May  9 21:29:13 2013.
 #
 # This file is execfile()d with the current directory set to its containing dir.
 #
@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.abspath('../crayfish'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.inheritance_diagram']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -99,7 +99,7 @@ html_theme = 'sphinxdoc'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {"nosidebar": "true"}
+html_theme_options = {'nosidebar': 'true'}
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
@@ -304,3 +304,14 @@ epub_copyright = u'2013, Richard Ladley'
 
 # If false, no index is generated.
 #epub_use_index = True
+
+
+def skip(app, what, name, obj, skip, options):
+    if name[0] == "_" and name[1] != "_":
+        return False
+    return skip
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip)
+
+autodoc_member_order = "bysource"

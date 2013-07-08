@@ -5,7 +5,7 @@ interfacing with alogithms.
 The argument `parent` is related to the wx heirachy and is not related to
 object inheritance.
 
-Any method with argument `evt` is called by wx in responce to a UI event.
+Any method with argument `evt` is called by wx in response to a UI event.
 Likewise any method with argument `event` signifies an event that is called by
 matplotlib.
 """

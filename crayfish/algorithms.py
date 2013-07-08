@@ -116,8 +116,9 @@ class KNN(MLAlgorithm):
     the cluster to be classified.
 
     ==Params==
-    k -- The number of closest points to inspect
-    Checkboxes -- Checked attributes will be include in calculations
+        k -- The number of closest points to inspect
+
+        Checkboxes -- Checked attributes will be include in calculations
     """
     def __init__(self, main_window):
         super(KNN, self).__init__(main_window)

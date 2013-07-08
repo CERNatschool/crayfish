@@ -6,22 +6,11 @@
 Welcome to Crayfish's documentation!
 ====================================
 
-Contents:
-
 .. toctree::
    :maxdepth: 4
 
-   algorithms
-   error_message
-   folder
    main
+   folder
+   error_message
+   algorithms
    pypix
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
