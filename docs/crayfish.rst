@@ -1,7 +1,7 @@
 main Module
 ===========
 
-.. automodule:: main
+.. automodule:: crayfish
     :members:
     :undoc-members:
     :show-inheritance:

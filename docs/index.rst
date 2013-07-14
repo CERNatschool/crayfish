@@ -9,7 +9,7 @@ Welcome to Crayfish's documentation!
 .. toctree::
    :maxdepth: 4
 
-   main
+   crayfish
    folder
    error_message
    algorithms
