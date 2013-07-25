@@ -57,7 +57,7 @@ this is little more than a convenient way to view docstrings.
 
 ## User Guide
 
-The user guide will be uploaded shortly.
+The user guide is available [here](http://cernatschool.github.io/crayfish/Crayfish%201.0%20User%20Guide.pdf)
 
 ## Acronym
 
