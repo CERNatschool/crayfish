@@ -182,7 +182,7 @@ class FileSelectPanel(wx.Panel):
         self.file_tree = FileTreeCtrl(self)
         self.aggregate_button = wx.Button(self, label="Aggregate")
         ext_label = wx.StaticText(self, label="Ext:")
-        self.ext_field = wx.ComboBox(self, value="*.lsc", choices=["*.lsc", "*.ascii"])
+        self.ext_field = wx.ComboBox(self, value="*.lsc", choices=["*.lsc", "*.ascii", "*.txt"])
         open_button = wx.Button(self, wx.ID_OPEN, label="Open...")
         self.aggregate_button.Disable()
 

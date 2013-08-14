@@ -157,10 +157,15 @@ class Frame(PixelGrid):
     @staticmethod
     def from_file(filepath, file_format = "lsc"):
         """
-        Returns a new frame with data read from a lsc formatted file
+        Returns a new frame with data read from a file
+
+        Args:
+            filepath: the filepath of the file
+            file_format: the format of the file
+                Either "lsc" or "ascii_matrix"
         """
-        frame = Frame()
         if file_format == "lsc":
+            frame = Frame()
             with open(filepath) as f:
                 try:
                     for line in f:
@@ -170,8 +175,19 @@ class Frame(PixelGrid):
                         pixel = tuple([int(coord) for coord in pixel.split(",")])
                         frame[pixel] = Hit(int(count))
                 except:
-                    raise Exception("Could not read " + filepath
-                            + "\n Please check the formatting."  )
+                    raise  Exception("Could not read \"" + filepath  + "\" as an lsc file"
+                           + "\n Please check the formatting.")
+        elif file_format == "ascii_matrix":
+            frame = Frame()
+            with open(filepath) as f:
+                try:
+                    for y, line in enumerate(f):
+                        for x, count in enumerate(line.strip().split(" ")):
+                            if int(count):
+                                frame[(int(x), int(y))] = Hit(int(count))
+                except:
+                    raise Exception("Could not read \"" + filepath + "\" as an ascii_matrix file"
+                            + "\n Please check the formatting.")
         else:
             raise Exception("File format not supported: " + file_format)
         return frame
